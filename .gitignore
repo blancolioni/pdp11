@@ -1,0 +1,20 @@
+# Object file
+*.o
+
+# Ada Library Information
+*.ali
+
+# Build files
+build
+
+# Generated files
+pdp11.gpr
+src/driver/pdp11-paths.ads
+src/driver/pdp11-options.ad[bs]
+.pdp11-options
+
+# Log file
+log
+
+# Other stuff
+tools

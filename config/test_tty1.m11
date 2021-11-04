@@ -1,0 +1,13 @@
+tty_buffer = 65409
+tty_enable = 65408
+
+mov #32, r0                 ; 00010101 11000000 00010100 00000000 
+
+1: movb r0, @#tty_buffer
+   movb #1, @#tty_enable
+   inc r0
+   cmp r0, #126
+   bne 1
+2: movb #10, @#tty_buffer
+   movb #1, @#tty_enable
+   rts pc
