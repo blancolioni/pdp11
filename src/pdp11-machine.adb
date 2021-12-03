@@ -869,15 +869,6 @@ package body Pdp11.Machine is
             PC := Word_16 (Machine.Get_Operand_Address (Rec.Dst, True));
 
          when I_JSR =>
-            SP := SP - 2;
-            Machine.Set_Word_16
-              (Address_Type (SP), Machine.Rs (Rec.Src.Register));
-            if Trace_Execution then
-               Ada.Text_IO.Put
-                 (" (" & Hex_Image (Machine.Rs (Rec.Src.Register))
-                  & " -> " & Hex_Image (SP) & ")");
-            end if;
-
             declare
                Destination : constant Address_Type :=
                                Machine.Get_Operand_Address (Rec.Dst, True);
@@ -885,6 +876,15 @@ package body Pdp11.Machine is
                if Rec.Src.Register /= 7 then
                   Machine.Rs (Rec.Src.Register) := PC;
                end if;
+               SP := SP - 2;
+               Machine.Set_Word_16
+                 (Address_Type (SP), Machine.Rs (Rec.Src.Register));
+               if Trace_Execution then
+                  Ada.Text_IO.Put
+                    (" (" & Hex_Image (Machine.Rs (Rec.Src.Register))
+                     & " -> " & Hex_Image (SP) & ")");
+               end if;
+
                PC := Word_16 (Destination);
             end;
 
