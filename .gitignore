@@ -10,7 +10,7 @@ build
 # Generated files
 pdp11.gpr
 src/driver/pdp11-paths.ads
-src/driver/pdp11-options.ad[bs]
+#src/driver/pdp11-options.ad[bs]
 .pdp11-options
 
 # Log file
