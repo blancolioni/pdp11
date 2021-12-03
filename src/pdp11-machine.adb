@@ -449,8 +449,7 @@ package body Pdp11.Machine is
       use Pdp11.ISA;
 
       procedure Set_Flags
-        (Value : Float_32)
-      is null;
+        (Value : Float_32);
 
       procedure Operate
         (Src : Float_32;
@@ -488,6 +487,18 @@ package body Pdp11.Machine is
             Set_Flags (Dst);
          end if;
       end Operate;
+
+      ---------------
+      -- Set_Flags --
+      ---------------
+
+      procedure Set_Flags
+        (Value : Float_32)
+      is
+      begin
+         Machine.Z := Value = 0.0;
+         Machine.N := Value < 0.0;
+      end Set_Flags;
 
    begin
       if Operand.Mode = Register_Mode and then not Operand.Deferred then
