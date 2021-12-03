@@ -12,8 +12,9 @@ package body Pdp11.Assembler.Parser is
 
    function At_Operand return Boolean;
    function Parse_Operand
-     (Assembly : in out Assembly_Type'Class)
-     return Pdp11.ISA.Operand_Type;
+     (Assembly    : in out Assembly_Type'Class;
+      Instruction : Pdp11.ISA.Instruction_Type)
+      return Pdp11.ISA.Operand_Type;
 
    function At_Register return Boolean;
    function Parse_Register
@@ -598,7 +599,7 @@ package body Pdp11.Assembler.Parser is
          end if;
       elsif Has_Source_Operand (Rec.Instruction) then
          if At_Operand then
-            Rec.Src := Parse_Operand (Assembly);
+            Rec.Src := Parse_Operand (Assembly, Rec.Instruction);
          else
             Error ("missing source operand");
          end if;
@@ -616,7 +617,7 @@ package body Pdp11.Assembler.Parser is
          if not At_Operand then
             Error ("missing operand");
          else
-            Rec.F_Operand := Parse_Operand (Assembly);
+            Rec.F_Operand := Parse_Operand (Assembly, Rec.Instruction);
          end if;
       elsif Rec.Instruction in Floating_Point_F2 then
          if At_FAC then
@@ -627,7 +628,7 @@ package body Pdp11.Assembler.Parser is
                  Deferred => False,
                  Register => Register_Index (Rec.FAC));
          elsif At_Operand then
-            Rec.F_Operand := Parse_Operand (Assembly);
+            Rec.F_Operand := Parse_Operand (Assembly, Rec.Instruction);
          else
             Error ("expected an operand");
          end if;
@@ -642,7 +643,8 @@ package body Pdp11.Assembler.Parser is
                       & " operand required");
             end if;
             if At_Operand then
-               Rec.V_Operand := Parse_Operand (Assembly);
+               Rec.V_Operand :=
+                 Parse_Operand (Assembly, Rec.Instruction);
             else
                Error ("missing operand");
             end if;
@@ -719,7 +721,8 @@ package body Pdp11.Assembler.Parser is
          end if;
 
          if At_Operand then
-            Rec.Dst := Parse_Operand (Assembly);
+            Rec.Dst :=
+              Parse_Operand (Assembly, Rec.Instruction);
          end if;
       end if;
 
@@ -791,14 +794,18 @@ package body Pdp11.Assembler.Parser is
    -------------------
 
    function Parse_Operand
-     (Assembly : in out Assembly_Type'Class)
+     (Assembly    : in out Assembly_Type'Class;
+      Instruction : Pdp11.ISA.Instruction_Type)
       return Pdp11.ISA.Operand_Type
    is
       use Pdp11.ISA;
-      Operand    : Operand_Type;
-      Have_Value : Boolean := False;
-      Auto_Dec   : Boolean := False;
-      Auto_Inc   : Boolean := False;
+      Operand     : Operand_Type;
+      Have_Value  : Boolean := False;
+      Auto_Dec    : Boolean := False;
+      Auto_Inc    : Boolean := False;
+      Value_Bytes : Positive := 2;
+      Size_32     : constant Boolean :=
+                      Instruction in Floating_Point_Instruction;
 
       procedure Scan_Value
         (Ref : Reference_Type);
@@ -820,33 +827,66 @@ package body Pdp11.Assembler.Parser is
          end if;
 
          if Tok = Tok_Integer_Constant then
-            declare
-               Value : Word_16 := Word_16'Value (Tok_Text);
-            begin
-               if Negative then
-                  Value := 65535 - Value + 1;
-               end if;
+            if Value_Bytes > 2 then
+               declare
+                  Value : Word_32 := Word_32'Value (Tok_Text);
+               begin
+                  if Negative then
+                     Value := Word_32'Last - Value + 1;
+                  end if;
 
-               Scan;
+                  Scan;
 
-               while Tok = Tok_Plus or else Tok = Tok_Minus loop
-                  declare
-                     Subtract : constant Boolean := Tok = Tok_Minus;
-                  begin
-                     Scan;
-                     if Tok = Tok_Integer_Constant then
-                        Value := (if Subtract
-                                  then Value - Word_16'Value (Tok_Text)
-                                  else Value + Word_16'Value (Tok_Text));
+                  while Tok = Tok_Plus or else Tok = Tok_Minus loop
+                     declare
+                        Subtract : constant Boolean := Tok = Tok_Minus;
+                     begin
                         Scan;
-                     else
-                        Error ("expected an integer constant");
-                     end if;
-                  end;
-               end loop;
+                        if Tok = Tok_Integer_Constant then
+                           Value := (if Subtract
+                                     then Value - Word_32'Value (Tok_Text)
+                                     else Value + Word_32'Value (Tok_Text));
+                           Scan;
+                        else
+                           Error ("expected an integer constant");
+                        end if;
+                     end;
+                  end loop;
 
-               Assembly.Append (Value);
-            end;
+                  Assembly.Append (Word_16 (Value mod 65536));
+                  Assembly.Append (Word_16 (Value / 65536));
+
+               end;
+            else
+               declare
+                  Value : Word_16 := Word_16'Value (Tok_Text);
+               begin
+                  if Negative then
+                     Value := 65535 - Value + 1;
+                  end if;
+
+                  Scan;
+
+                  while Tok = Tok_Plus or else Tok = Tok_Minus loop
+                     declare
+                        Subtract : constant Boolean := Tok = Tok_Minus;
+                     begin
+                        Scan;
+                        if Tok = Tok_Integer_Constant then
+                           Value := (if Subtract
+                                     then Value - Word_16'Value (Tok_Text)
+                                     else Value + Word_16'Value (Tok_Text));
+                           Scan;
+                        else
+                           Error ("expected an integer constant");
+                        end if;
+                     end;
+                  end loop;
+
+                  Assembly.Append (Value);
+               end;
+            end if;
+
             Have_Value := True;
          elsif Tok = Tok_Identifier then
             Assembly.Reference
@@ -874,6 +914,10 @@ package body Pdp11.Assembler.Parser is
 
          Operand.Mode := Autoincrement_Mode;
          Operand.Register := 7;
+
+         if Size_32 then
+            Value_Bytes := 4;
+         end if;
 
          Scan_Value (Absolute);
 
