@@ -58,6 +58,9 @@ begin
            (Driver => Pdp11.Drivers.RAM.Create_RAM (4095),
             Base   => 4096);
          Machine.Add_Driver
+           (Driver => Pdp11.Drivers.RAM.Create_RAM (256),
+            Base   => 0);
+         Machine.Add_Driver
            (Driver => Pdp11.Drivers.TTY.TTY_Driver,
             Base   => 16#FF80#);
          Machine.Set_Register (7, Word_16 (Base_Address));
