@@ -6,6 +6,7 @@ with Pdp11.Tokens;                   use Pdp11.Tokens;
 with Pdp11.Lexical;                  use Pdp11.Lexical;
 
 with Pdp11.ISA;
+with Pdp11.Options;
 
 package body Pdp11.Assembler.Parser is
 
@@ -533,7 +534,9 @@ package body Pdp11.Assembler.Parser is
          Scan;
          Directive_Parser_Table.Element (Name) (Assembly);
       else
-         Warning ("unknown directive: " & Name);
+         if Pdp11.Options.Warnings then
+            Warning ("unknown directive: " & Name);
+         end if;
          Skip_Line;
       end if;
    end Parse_Directive;

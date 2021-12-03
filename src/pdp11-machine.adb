@@ -4,10 +4,11 @@ with Ada.Text_IO;
 
 with Pdp11.Conversions;
 with Pdp11.Images;                     use Pdp11.Images;
+with Pdp11.Options;
 
 package body Pdp11.Machine is
 
-   Trace_Execution : constant Boolean := False;
+   Trace_Execution : Boolean := False;
 
    package Float_32_Functions is
      new Ada.Numerics.Generic_Elementary_Functions (Float_32);
@@ -171,11 +172,13 @@ package body Pdp11.Machine is
          Index := Index + 1;
       end loop;
 
-      Ada.Text_IO.Put_Line
-        ("Device" & Index'Image & ": " & Driver.Name & " at "
-         & Hex_Image (Word_16 (Base))
-         & "-"
-         & Images.Hex_Image (Word_16 (Base + Driver.Bound - 1)));
+      if not Pdp11.Options.Quiet then
+         Ada.Text_IO.Put_Line
+           ("Device" & Index'Image & ": " & Driver.Name & " at "
+            & Hex_Image (Word_16 (Base))
+            & "-"
+            & Images.Hex_Image (Word_16 (Base + Driver.Bound - 1)));
+      end if;
 
       Machine.Installed_Drivers (Index) :=
         Driver_Record'
@@ -397,6 +400,8 @@ package body Pdp11.Machine is
          Machine.Started := True;
          Machine.Clock := 0.0;
       end if;
+
+      Trace_Execution := Pdp11.Options.Trace;
 
       Start_Clock := Machine.Clock;
       End_Clock   := Machine.Clock + Quantum;
