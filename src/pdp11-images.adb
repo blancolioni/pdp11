@@ -79,6 +79,8 @@ package body Pdp11.Images is
             return Mnemonic;
          when Floating_Point_F2 =>
             return Mnemonic;
+         when I_INVF =>
+            return Mnemonic;
          when Vector_F1 =>
             return Mnemonic
               & " " & VAC_Image (Rec.VAC_1)

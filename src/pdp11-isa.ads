@@ -40,7 +40,7 @@ package Pdp11.ISA is
       I_JMP, I_JSR, I_RTS,
       I_CCC, I_SCC,
       I_MULF, I_MODF, I_ADDF, I_LDF, I_SUBF, I_CMPF, I_STF, I_DIVF,
-      I_CLRF, I_TSTF, I_ABSF, I_NEGF,
+      I_CLRF, I_TSTF, I_ABSF, I_NEGF, I_INVF,
       I_LDV, I_STV,
       I_ADDV, I_SUBV, I_ABSV, I_MULFV,
       I_CLRV, I_NEGV, I_NORMV);

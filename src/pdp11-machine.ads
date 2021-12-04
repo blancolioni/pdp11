@@ -5,9 +5,10 @@ with Pdp11.Memory;
 
 package Pdp11.Machine is
 
-   Halted    : exception;
-   Bus_Error : exception;
-   ISA_Error : exception;
+   Halted           : exception;
+   Bus_Error        : exception;
+   ISA_Error        : exception;
+   Division_By_Zero : exception;
 
    type Machine_Type is
      new Pdp11.Memory.Root_Memory_Type with private;

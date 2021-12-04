@@ -941,6 +941,27 @@ package body Pdp11.Machine is
          when Floating_Point_F2 =>
             Machine.Float_Format_2 (Rec.Instruction, Rec.F_Operand);
 
+         when I_INVF =>
+            declare
+               procedure Update (X : in out Float_32);
+
+               ------------
+               -- Update --
+               ------------
+
+               procedure Update (X : in out Float_32) is
+               begin
+                  if X = 0.0 then
+                     raise Division_By_Zero;
+                  end if;
+                  X := 1.0 / X;
+               end Update;
+
+            begin
+               Machine.Update_Float_Operand_Value
+                 (Rec.F_Operand, Update'Access);
+            end;
+
          when Vector_F1 =>
             Machine.Vector_Format_1
               (Rec.Instruction, Rec.VAC_1, Rec.V_Operand);

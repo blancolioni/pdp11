@@ -176,6 +176,11 @@ package body Pdp11.ISA is
            (Instruction => Get_Instruction (IR, I_CLRF, 6, 7),
             F_Operand   => Operand (IR, 0),
             others      => <>);
+      elsif IR in 8#170300# .. 8#170377# then
+         Rec := Instruction_Record'
+           (Instruction => I_INVF,
+            F_Operand   => Operand (IR, 0),
+            others      => <>);
       elsif IR in 8#007000# .. 8#007777# then
          Rec := Instruction_Record'
            (Instruction => Get_Instruction (IR, I_LDV, 8, 8),
@@ -343,6 +348,8 @@ package body Pdp11.ISA is
                - Instruction_Type'Pos (Floating_Point_F2'First))
               * 64
               + Encode (Rec.F_Operand,  0);
+         when I_INVF =>
+            return 8#170300# + Encode (Rec.F_Operand, 0);
          when Vector_F1 =>
             return 8#007000#
             + Get_Opcode (Rec.Instruction, Vector_F1'First, 8)

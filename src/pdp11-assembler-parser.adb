@@ -619,7 +619,9 @@ package body Pdp11.Assembler.Parser is
          else
             Rec.F_Operand := Parse_Operand (Assembly, Rec.Instruction);
          end if;
-      elsif Rec.Instruction in Floating_Point_F2 then
+      elsif Rec.Instruction in Floating_Point_F2
+        or else Rec.Instruction = I_INVF
+      then
          if At_FAC then
             Rec.FAC := Parse_FAC;
             Rec.F_Operand :=
