@@ -71,16 +71,18 @@ private
    type Machine_Type is
      new Pdp11.Memory.Root_Memory_Type with
       record
-         Rs                : Register_Array :=
-                               (0, 1, 2, 3, 4, 5, 6, 7);
-         ACs               : Float_Register_Array := (others => 0.0);
-         VRs               : Vector_Register_Array :=
-                               (others => (others => 0.0));
-         Installed_Drivers : Installed_Driver_Array;
-         Driver_Map        : Address_Driver_Map := (others => 0);
-         Started           : Boolean := False;
-         N, Z, V, C        : Boolean := False;
-         Clock             : ISA.Microsecond_Duration := 0.0;
+         Rs                  : Register_Array :=
+                                 (0, 1, 2, 3, 4, 5, 6, 7);
+         ACs                 : Float_Register_Array := (others => 0.0);
+         VRs                 : Vector_Register_Array :=
+                                 (others => (others => 0.0));
+         Installed_Drivers   : Installed_Driver_Array;
+         Driver_Map          : Address_Driver_Map := (others => 0);
+         Started             : Boolean := False;
+         N, Z, V, C          : Boolean := False;
+         Clock               : ISA.Microsecond_Duration := 0.0;
+         Current_Instruction : ISA.Instruction_Type;
+         Current_Timing      : ISA.Microsecond_Duration;
       end record;
 
    overriding function Get_Word_16

@@ -116,11 +116,13 @@ package Pdp11.ISA is
       return Microsecond_Duration;
 
    function Src_Operand_Timing
-     (Operand : Operand_Type)
+     (Instruction : Instruction_Type;
+      Operand     : Operand_Type)
       return Microsecond_Duration;
 
    function Dst_Operand_Timing
-     (Operand : Operand_Type)
+     (Instruction : Instruction_Type;
+      Operand     : Operand_Type)
       return Microsecond_Duration;
 
    type Instruction_Record is
@@ -145,9 +147,5 @@ package Pdp11.ISA is
    function Encode
      (Rec : Instruction_Record)
       return Word_16;
-
-   function Timing
-     (Rec : Instruction_Record)
-      return Microsecond_Duration;
 
 end Pdp11.ISA;

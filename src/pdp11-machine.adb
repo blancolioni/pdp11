@@ -223,6 +223,7 @@ package body Pdp11.Machine is
             Taken := Machine.C;
       end case;
       if Taken xor Negate then
+         Machine.Current_Timing := Machine.Current_Timing + 0.9;
          declare
             PC : Word_16 renames Machine.Rs (7);
             New_PC : constant Word_16 :=
@@ -282,6 +283,9 @@ package body Pdp11.Machine is
       Dst     : Pdp11.ISA.Operand_Type)
    is
       use Pdp11.ISA;
+      Timing   : constant Microsecond_Duration :=
+                   Src_Operand_Timing (Op, Src)
+                   + Dst_Operand_Timing (Op, Dst);
       X        : constant Word_16 := Machine.Get_Operand_Value (Src, Word);
       Dst_Addr : constant Address_Type :=
         (if Is_Register_Operand (Dst) then 0
@@ -322,6 +326,7 @@ package body Pdp11.Machine is
       end Store;
 
    begin
+
       case Op is
          when I_MOV =>
             Store (X);
@@ -380,6 +385,7 @@ package body Pdp11.Machine is
                Machine.Set_VC (Word, X, (not Y) + 1, Z);
             end;
       end case;
+      Machine.Current_Timing := Machine.Current_Timing + Timing;
    end Double_Operand;
 
    -------------
@@ -706,6 +712,7 @@ package body Pdp11.Machine is
       Word    : Boolean)
       return Word_16
    is
+      use Pdp11.ISA;
    begin
       if Pdp11.ISA.Is_Register_Operand (Operand) then
          return Machine.Rs (Operand.Register);
@@ -716,6 +723,10 @@ package body Pdp11.Machine is
          begin
             if Trace_Execution then
                Ada.Text_IO.Put (" (" & Hex_Image (Word_16 (Address)) & ")");
+            end if;
+
+            if Address mod 2 = 1 then
+               Machine.Current_Timing := Machine.Current_Timing + 0.6;
             end if;
 
             if Word then
@@ -851,6 +862,10 @@ package body Pdp11.Machine is
 
       PC := PC + 2;
 
+      Machine.Current_Instruction := Rec.Instruction;
+      Machine.Current_Timing :=
+        ISA.Basic_Timing (Rec.Instruction);
+
       if IR = 0 then
          raise Halted with "halted at " & Hex_Image (PC);
       end if;
@@ -978,7 +993,7 @@ package body Pdp11.Machine is
          Ada.Text_IO.New_Line;
       end if;
 
-      Machine.Clock := Machine.Clock + Timing (Rec);
+      Machine.Clock := Machine.Clock + Machine.Current_Timing;
 
    end Next;
 
@@ -1291,6 +1306,8 @@ package body Pdp11.Machine is
       Dst     : Pdp11.ISA.Operand_Type)
    is
       use Pdp11.ISA;
+      Timing   : constant Microsecond_Duration :=
+                   Dst_Operand_Timing (Op, Dst);
       Dst_Addr : constant Address_Type :=
                    (if Is_Register_Operand (Dst) then 0
                     else Machine.Get_Operand_Address (Dst, Word));
@@ -1420,6 +1437,7 @@ package body Pdp11.Machine is
             null;
 
       end case;
+      Machine.Current_Timing := Machine.Current_Timing + Timing;
    end Single_Operand;
 
    --------------------------------

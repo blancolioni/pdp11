@@ -98,6 +98,10 @@ package body Pdp11.ISA is
             return 2.39;
          when Branch_Instruction =>
             return 1.87;
+         when Floating_Point_F1 =>
+            return 6.0;
+         when Floating_Point_F2 =>
+            return 5.0;
          when others =>
             return 3.1;
       end case;
@@ -209,20 +213,28 @@ package body Pdp11.ISA is
    ------------------------
 
    function Dst_Operand_Timing
-     (Operand : Operand_Type)
+     (Instruction : Instruction_Type;
+      Operand     : Operand_Type)
       return Microsecond_Duration
    is
+      Reduction : constant Microsecond_Duration :=
+                    (if Instruction in I_CMP | I_TST | I_BIT
+                     and then (Operand.Mode /= Register_Mode
+                       or else Operand.Deferred)
+                     then 0.4
+                     else 0.0);
+      Timing    : constant Microsecond_Duration :=
+                    (case Operand.Mode is
+                        when Register_Mode =>
+                       (if Operand.Deferred then 1.48 else 0.0),
+                        when Autoincrement_Mode =>
+                       (if Operand.Deferred then 3.20 else 1.76),
+                        when Autodecrement_Mode =>
+                       (if Operand.Deferred then 3.20 else 1.76),
+                        when Index_Mode         =>
+                       (if Operand.Deferred then 4.92 else 3.46));
    begin
-      case Operand.Mode is
-         when Register_Mode =>
-            return (if Operand.Deferred then 1.48 else 0.0);
-         when Autoincrement_Mode =>
-            return (if Operand.Deferred then 3.20 else 1.76);
-         when Autodecrement_Mode =>
-            return (if Operand.Deferred then 3.20 else 1.76);
-         when Index_Mode =>
-            return (if Operand.Deferred then 4.92 else 3.46);
-      end case;
+      return Timing - Reduction;
    end Dst_Operand_Timing;
 
    ------------
@@ -372,9 +384,11 @@ package body Pdp11.ISA is
    ------------------------
 
    function Src_Operand_Timing
-     (Operand : Operand_Type)
+     (Instruction : Instruction_Type;
+      Operand     : Operand_Type)
       return Microsecond_Duration
    is
+      pragma Unreferenced (Instruction);
    begin
       case Operand.Mode is
          when Register_Mode =>
@@ -387,28 +401,6 @@ package body Pdp11.ISA is
             return (if Operand.Deferred then 4.38 else 2.92);
       end case;
    end Src_Operand_Timing;
-
-   ------------
-   -- Timing --
-   ------------
-
-   function Timing
-     (Rec : Instruction_Record)
-      return Microsecond_Duration
-   is
-      Result : Microsecond_Duration := Basic_Timing (Rec.Instruction);
-   begin
-      case Rec.Instruction is
-         when Double_Operand_Instruction =>
-            Result := Result + Src_Operand_Timing (Rec.Src)
-              + Dst_Operand_Timing (Rec.Dst);
-         when Single_Operand_Instruction =>
-            Result := Result + Dst_Operand_Timing (Rec.Dst);
-         when others =>
-            null;
-      end case;
-      return Result;
-   end Timing;
 
    --------------------------------
    -- To_Floating_Point_Format_1 --
