@@ -1055,14 +1055,7 @@ package body Pdp11.Machine is
       Ada.Text_IO.Put (if Machine.Z then "Z" else "-");
       Ada.Text_IO.Put (if Machine.V then "V" else "-");
       Ada.Text_IO.Put (if Machine.C then "C" else "-");
-      declare
-         Img : constant String := Machine.Clock_Image;
-      begin
-         Ada.Text_IO.Put (Img (Img'First .. Img'Last - 2));
-         Ada.Text_IO.Put ('.');
-         Ada.Text_IO.Put (Img (Img'Last - 1 .. Img'Last));
-      end;
-
+      Ada.Text_IO.Put (Machine.Clock_Image);
       Ada.Text_IO.New_Line;
    end Report;
 
