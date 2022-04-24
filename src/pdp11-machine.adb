@@ -160,9 +160,7 @@ package body Pdp11.Machine is
    is
       use type Pdp11.Drivers.Pdp11_Driver;
       Index : Driver_Index := 1;
-      Base_Page  : constant Address_Type := Base / 64;
-      Page_Count : constant Address_Type :=
-                     (Driver.Bound + 63) / 64;
+      Bound : constant Address_Type := Base + Driver.Bound;
    begin
       while Machine.Installed_Drivers (Index).Driver /= null loop
          if Index = Driver_Index'Last then
@@ -185,8 +183,8 @@ package body Pdp11.Machine is
           (Base   => Base,
            Driver => Pdp11.Drivers.Pdp11_Driver (Driver));
 
-      for Page in 0 .. Page_Count - 1 loop
-         Machine.Driver_Map (Base_Page + Page) := Index;
+      for Addr in Base .. Bound - 1 loop
+         Machine.Driver_Map (Addr) := Index;
       end loop;
 
    end Add_Driver;
@@ -602,7 +600,7 @@ package body Pdp11.Machine is
    is
       use Pdp11.Drivers;
       Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Get_Page (Address));
+                 Machine.Driver_Map (Address);
       Base   : constant Address_Type :=
                  Machine.Installed_Drivers (Index).Base;
       Driver : constant Pdp11_Driver :=
@@ -800,7 +798,7 @@ package body Pdp11.Machine is
    is
       use Pdp11.Drivers;
       Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Get_Page (Address));
+                 Machine.Driver_Map (Address);
       Base   : constant Address_Type :=
                  Machine.Installed_Drivers (Index).Base;
       Driver : constant Pdp11_Driver :=
@@ -824,7 +822,7 @@ package body Pdp11.Machine is
    is
       use Pdp11.Drivers;
       Index : constant Driver_Index :=
-                Machine.Driver_Map (Get_Page (Address));
+                Machine.Driver_Map (Address);
       Base  : constant Address_Type :=
                 Machine.Installed_Drivers (Index).Base;
       Driver : constant Pdp11_Driver :=
@@ -1085,7 +1083,7 @@ package body Pdp11.Machine is
    is
       use Pdp11.Drivers;
       Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Get_Page (Address));
+                 Machine.Driver_Map (Address);
       Base   : constant Address_Type :=
                  Machine.Installed_Drivers (Index).Base;
       Driver : constant Pdp11_Driver :=
@@ -1258,7 +1256,7 @@ package body Pdp11.Machine is
    is
       use Pdp11.Drivers;
       Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Get_Page (Address));
+                 Machine.Driver_Map (Address);
       Base   : constant Address_Type :=
                  Machine.Installed_Drivers (Index).Base;
       Driver : constant Pdp11_Driver :=
@@ -1282,7 +1280,7 @@ package body Pdp11.Machine is
    is
       use Pdp11.Drivers;
       Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Get_Page (Address));
+                 Machine.Driver_Map (Address);
       Base   : constant Address_Type :=
                  Machine.Installed_Drivers (Index).Base;
       Driver : constant Pdp11_Driver :=

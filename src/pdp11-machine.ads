@@ -28,6 +28,11 @@ package Pdp11.Machine is
 
    subtype Machine_Register is Pdp11.ISA.Register_Index;
 
+   function Get_Register
+     (Machine  : Machine_Type'Class;
+      Register : Machine_Register)
+      return Word_16;
+
    procedure Set_Register
      (Machine  : in out Machine_Type'Class;
       Register : Machine_Register;
@@ -53,11 +58,9 @@ private
 
    type Driver_Index is range 0 .. 255;
 
-   type Address_Driver_Map is
-     array (Address_Type range 0 .. 1023) of Driver_Index;
-
-   function Get_Page (Address : Address_Type) return Address_Type
-   is (Address / 64);
+   type Driver_Address_Map is
+     array (Address_Type) of Driver_Index
+     with Pack, Size => 8 * 65536;
 
    type Driver_Record is
       record
@@ -77,7 +80,7 @@ private
          VRs                 : Vector_Register_Array :=
                                  (others => (others => 0.0));
          Installed_Drivers   : Installed_Driver_Array;
-         Driver_Map          : Address_Driver_Map := (others => 0);
+         Driver_Map          : Driver_Address_Map := (others => 0);
          Started             : Boolean := False;
          N, Z, V, C          : Boolean := False;
          Clock               : ISA.Microsecond_Duration := 0.0;
@@ -114,5 +117,11 @@ private
      (Machine : in out Machine_Type;
       Address : Address_Type;
       Value   : Float_32);
+
+   function Get_Register
+     (Machine  : Machine_Type'Class;
+      Register : Machine_Register)
+      return Word_16
+   is (Machine.Rs (Register));
 
 end Pdp11.Machine;
