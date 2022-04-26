@@ -108,7 +108,7 @@ package Pdp11.ISA is
    is (Instruction in Branch_Instruction);
 
    type Microsecond_Duration is delta 0.001 range
-     0.0 .. (2 ** 31 - 1) * 0.001;
+     0.0 .. (2 ** 63 - 1) * 0.001;
    for Microsecond_Duration'Small use 0.001;
 
    function Basic_Timing
