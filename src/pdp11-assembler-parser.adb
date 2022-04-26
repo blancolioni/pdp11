@@ -917,7 +917,7 @@ package body Pdp11.Assembler.Parser is
          Operand.Mode := Autoincrement_Mode;
          Operand.Register := 7;
 
-         if Size_32 then
+         if Size_32 and then not Operand.Deferred then
             Value_Bytes := 4;
          end if;
 
