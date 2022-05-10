@@ -141,53 +141,13 @@ package body Pdp11.Machine is
      (Machine : Machine_Type'Class;
       Address : Address_Type;
       Write   : Boolean)
-     with No_Return;
+     with No_Return, Unreferenced;
 
    --  procedure Raise_ISA_Error
    --    (Machine : Machine_Type'Class;
    --     Address : Address_Type;
    --     IR      : Word_16)
    --  is null;
-
-   ----------------
-   -- Add_Driver --
-   ----------------
-
-   procedure Add_Driver
-     (Machine : in out Machine_Type'Class;
-      Driver  : not null access Pdp11.Drivers.Root_Driver_Type'Class;
-      Base    : Address_Type)
-   is
-      use type Pdp11.Drivers.Pdp11_Driver;
-      Index : Driver_Index := 1;
-      Bound : constant Address_Type := Base + Driver.Bound;
-   begin
-      while Machine.Installed_Drivers (Index).Driver /= null loop
-         if Index = Driver_Index'Last then
-            raise Constraint_Error with
-              "too many drivers";
-         end if;
-         Index := Index + 1;
-      end loop;
-
-      if not Pdp11.Options.Quiet then
-         Ada.Text_IO.Put_Line
-           ("Device" & Index'Image & ": " & Driver.Name & " at "
-            & Hex_Image (Word_16 (Base))
-            & "-"
-            & Images.Hex_Image (Word_16 (Base + Driver.Bound - 1)));
-      end if;
-
-      Machine.Installed_Drivers (Index) :=
-        Driver_Record'
-          (Base   => Base,
-           Driver => Pdp11.Drivers.Pdp11_Driver (Driver));
-
-      for Addr in Base .. Bound - 1 loop
-         Machine.Driver_Map (Addr) := Index;
-      end loop;
-
-   end Add_Driver;
 
    ------------
    -- Branch --
@@ -234,19 +194,6 @@ package body Pdp11.Machine is
       end if;
    end Branch;
 
-   -------------------
-   -- Clear_Drivers --
-   -------------------
-
-   procedure Clear_Drivers
-     (Machine : in out Machine_Type'Class)
-   is
-   begin
-      Machine.Installed_Drivers :=
-        (others => (0, null));
-      Machine.Driver_Map := (others => 0);
-   end Clear_Drivers;
-
    -----------------
    -- Clock_Image --
    -----------------
@@ -268,6 +215,18 @@ package body Pdp11.Machine is
       end loop;
       return Img;
    end Clock_Image;
+
+   ------------
+   -- Create --
+   ------------
+
+   procedure Create
+     (This   : in out Machine_Type'Class;
+      Memory : not null access Pdp11.Addressable.Root_Addressable_Type'Class)
+   is
+   begin
+      This.Memory := Pdp11.Addressable.Addressable_Reference (Memory);
+   end Create;
 
    --------------------
    -- Double_Operand --
@@ -417,7 +376,7 @@ package body Pdp11.Machine is
       Used := Machine.Clock - Start_Clock;
 
    exception
-      when E : Bus_Error =>
+      when E : Pdp11.Addressable.Bad_Address =>
          Ada.Text_IO.Put_Line
            (Ada.Exceptions.Exception_Message (E));
          Used := Machine.Clock - Start_Clock;
@@ -598,19 +557,8 @@ package body Pdp11.Machine is
       Address : Address_Type)
       return Float_32
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Address);
-      Base   : constant Address_Type :=
-                 Machine.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Machine.Installed_Drivers (Index).Driver;
    begin
-      if Driver = null then
-         Machine.Raise_Bus_Error (Address, False);
-      else
-         return Driver.Get_Float_32 (Address - Base);
-      end if;
+      return Machine.Memory.Get_Float_32 (Address);
    end Get_Float_32;
 
    -----------------------------
@@ -736,6 +684,33 @@ package body Pdp11.Machine is
       end if;
    end Get_Operand_Value;
 
+   function Get_PS
+     (Machine : Machine_Type'Class)
+      return Word_16
+   is
+      PSW : Word_16 := Word_16 (Machine.Priority);
+
+      procedure Get (X : Boolean);
+
+      ---------
+      -- Get --
+      ---------
+
+      procedure Get (X : Boolean) is
+      begin
+         PSW := PSW * 2 + Boolean'Pos (X);
+      end Get;
+
+   begin
+      Get (Machine.T);
+      Get (Machine.N);
+      Get (Machine.Z);
+      Get (Machine.V);
+      Get (Machine.C);
+
+      return PSW;
+   end Get_PS;
+
    ------------------------------
    -- Get_Vector_Operand_Value --
    ------------------------------
@@ -796,19 +771,8 @@ package body Pdp11.Machine is
       Address : Address_Type)
       return Word_8
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Address);
-      Base   : constant Address_Type :=
-                 Machine.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Machine.Installed_Drivers (Index).Driver;
    begin
-      if Driver = null then
-         Raise_Bus_Error (Machine, Address, False);
-      else
-         return Driver.Get_Word_8 (Address - Base);
-      end if;
+      return Machine.Memory.Get_Word_8 (Address);
    end Get_Word_8;
 
    -----------------
@@ -820,20 +784,44 @@ package body Pdp11.Machine is
       Address : Address_Type)
       return Word_16
    is
-      use Pdp11.Drivers;
-      Index : constant Driver_Index :=
-                Machine.Driver_Map (Address);
-      Base  : constant Address_Type :=
-                Machine.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Machine.Installed_Drivers (Index).Driver;
    begin
-      if Driver = null then
-         Machine.Raise_Bus_Error (Address, False);
-      else
-         return Driver.Get_Word_16 (Address - Base);
-      end if;
+      return Machine.Memory.Get_Word_16 (Address);
    end Get_Word_16;
+
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   overriding procedure Interrupt
+     (Machine  : in out Machine_Type;
+      Priority : Interrupt_Priority_Type;
+      Vector   : Address_Type)
+   is
+      procedure Push (X : Word_16);
+
+      ----------
+      -- Push --
+      ----------
+
+      procedure Push (X : Word_16) is
+      begin
+         Machine.Rs (6) := Machine.Rs (6) - 2;
+         Machine.Set_Word_16 (Address_Type (Machine.Rs (6)), X);
+      end Push;
+
+   begin
+      if Priority > Machine.Priority then
+         Ada.Text_IO.Put_Line
+           ("interrupt: priority" & Priority'Image
+            & ", vector " & Pdp11.Images.Hex_Image (Word_16 (Vector)));
+         Push (Machine.Get_PS);
+         Push (Machine.Rs (7));
+         Machine.Rs (7) := Machine.Get_Word_16 (Vector);
+         Machine.Set_PS (Machine.Get_Word_16 (Vector + 2));
+         Machine.Current_Timing :=
+           Pdp11.ISA."+" (Machine.Current_Timing, 7.2);
+      end if;
+   end Interrupt;
 
    ----------
    -- Next --
@@ -1005,7 +993,7 @@ package body Pdp11.Machine is
       Write   : Boolean)
    is
    begin
-      raise Bus_Error with
+      raise Pdp11.Addressable.Bad_Address with
         "Bus error at PC "
         & Hex_Image (Machine.Rs (7))
         & " while "
@@ -1081,19 +1069,8 @@ package body Pdp11.Machine is
       Address : Address_Type;
       Value   : Float_32)
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Address);
-      Base   : constant Address_Type :=
-                 Machine.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Machine.Installed_Drivers (Index).Driver;
    begin
-      if Driver /= null then
-         Driver.Set_Float_32 (Address - Base, Value);
-      else
-         Machine.Raise_Bus_Error (Address, True);
-      end if;
+      Machine.Memory.Set_Float_32 (Address, Value);
    end Set_Float_32;
 
    -----------------------------
@@ -1158,6 +1135,37 @@ package body Pdp11.Machine is
          Machine.Z := Value mod 256 = 0;
       end if;
    end Set_NZ;
+
+   ------------
+   -- Set_PS --
+   ------------
+
+   procedure Set_PS
+     (Machine : in out Machine_Type'Class;
+      Value   : Word_16)
+   is
+      It : Word_16 := Value;
+
+      procedure Set (X : in out Boolean);
+
+      ---------
+      -- Set --
+      ---------
+
+      procedure Set (X : in out Boolean) is
+      begin
+         X := It mod 2 = 1;
+         It := It / 2;
+      end Set;
+
+   begin
+      Set (Machine.C);
+      Set (Machine.V);
+      Set (Machine.Z);
+      Set (Machine.N);
+      Set (Machine.T);
+      Machine.Priority := Priority_Type (It mod 8);
+   end Set_PS;
 
    ------------------
    -- Set_Register --
@@ -1254,19 +1262,8 @@ package body Pdp11.Machine is
       Address : Address_Type;
       Value   : Word_8)
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Address);
-      Base   : constant Address_Type :=
-                 Machine.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Machine.Installed_Drivers (Index).Driver;
    begin
-      if Driver /= null then
-         Driver.Set_Word_8 (Address - Base, Value);
-      else
-         Machine.Raise_Bus_Error (Address, True);
-      end if;
+      Machine.Memory.Set_Word_8 (Address, Value);
    end Set_Word_8;
 
    -----------------
@@ -1278,19 +1275,8 @@ package body Pdp11.Machine is
       Address : Address_Type;
       Value   : Word_16)
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Machine.Driver_Map (Address);
-      Base   : constant Address_Type :=
-                 Machine.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Machine.Installed_Drivers (Index).Driver;
    begin
-      if Driver /= null then
-         Driver.Set_Word_16 (Address - Base, Value);
-      else
-         Machine.Raise_Bus_Error (Address, True);
-      end if;
+      Machine.Memory.Set_Word_16 (Address, Value);
    end Set_Word_16;
 
    --------------------
@@ -1316,16 +1302,18 @@ package body Pdp11.Machine is
                     else Machine.Get_Word_16 (Dst_Addr));
 
       procedure Result
-        (Z : Word_16;
-         Store : Boolean := True);
+        (Z         : Word_16;
+         Store     : Boolean := True;
+         Set_Flags : Boolean := True);
 
       ------------
       -- Result --
       ------------
 
       procedure Result
-        (Z     : Word_16;
-         Store : Boolean := True)
+        (Z         : Word_16;
+         Store     : Boolean := True;
+         Set_Flags : Boolean := True)
       is
       begin
          if Trace_Execution then
@@ -1351,7 +1339,10 @@ package body Pdp11.Machine is
             end if;
          end if;
 
-         Machine.Set_NZ (Word, Z);
+         if Set_Flags then
+            Machine.Set_NZ (Word, Z);
+         end if;
+
       end Result;
 
    begin
@@ -1414,7 +1405,7 @@ package body Pdp11.Machine is
             null;
 
          when I_MTPS =>
-            null;
+            Machine.Set_PS (Y);
 
          when I_MFPI =>
             null;
@@ -1432,8 +1423,7 @@ package body Pdp11.Machine is
             null;
 
          when I_MFPS =>
-            null;
-
+            Result (Machine.Get_PS, Set_Flags => False);
       end case;
       Machine.Current_Timing := Machine.Current_Timing + Timing;
    end Single_Operand;

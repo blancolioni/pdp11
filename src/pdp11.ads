@@ -17,4 +17,8 @@ package Pdp11 is
    type Integer_16 is range -2 ** 15 .. 2 ** 15 - 1;
    for Integer_16'Size use 16;
 
+   type Priority_Type is mod 8;
+
+   subtype Interrupt_Priority_Type is Priority_Type range 4 .. 7;
+
 end Pdp11;

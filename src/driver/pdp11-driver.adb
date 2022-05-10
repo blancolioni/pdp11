@@ -8,6 +8,8 @@ with Pdp11.Assembler;
 with Pdp11.ISA;
 with Pdp11.Machine;
 
+with Pdp11.Addressable.Memory;
+
 with Pdp11.Drivers.RAM;
 with Pdp11.Drivers.ROM;
 with Pdp11.Drivers.TTY;
@@ -51,20 +53,28 @@ begin
       end if;
 
       if Output /= "" and then Pdp11.Options.Execute then
-         Machine.Add_Driver
-           (Driver => Pdp11.Drivers.ROM.Create_ROM_Driver (Output),
-            Base   => Base_Address);
-         Machine.Add_Driver
-           (Driver => Pdp11.Drivers.RAM.Create_RAM (4095),
-            Base   => 4096);
-         Machine.Add_Driver
-           (Driver => Pdp11.Drivers.RAM.Create_RAM (256),
-            Base   => 0);
-         Machine.Add_Driver
-           (Driver => Pdp11.Drivers.TTY.TTY_Driver,
-            Base   => 16#FF80#);
-         Machine.Set_Register (7, Word_16 (Base_Address));
-         Machine.Set_Register (6, 16#1FFE#);
+         declare
+            Memory : constant Pdp11.Addressable.Memory.Memory_Reference :=
+                       Pdp11.Addressable.Memory.Create;
+         begin
+            Memory.Add_Driver
+              (Driver => Pdp11.Drivers.ROM.Create_ROM_Driver (Output),
+               Base   => Base_Address);
+            Memory.Add_Driver
+              (Driver => Pdp11.Drivers.RAM.Create_RAM (4095),
+               Base   => 4096);
+            Memory.Add_Driver
+              (Driver => Pdp11.Drivers.RAM.Create_RAM (256),
+               Base   => 0);
+            Memory.Add_Driver
+              (Driver => Pdp11.Drivers.TTY.TTY_Driver,
+               Base   => 16#FF80#);
+
+            Machine.Create (Memory);
+
+            Machine.Set_Register (7, Word_16 (Base_Address));
+            Machine.Set_Register (6, 16#1FFE#);
+         end;
 
          declare
             Time_Limit : constant Natural := Pdp11.Options.Time_Limit;

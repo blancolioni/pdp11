@@ -1,25 +1,24 @@
 with Pdp11.ISA;
 
 with Pdp11.Drivers;
-with Pdp11.Memory;
+with Pdp11.Addressable;
 
 package Pdp11.Machine is
 
    Halted           : exception;
-   Bus_Error        : exception;
    ISA_Error        : exception;
    Division_By_Zero : exception;
 
    type Machine_Type is
-     new Pdp11.Memory.Root_Memory_Type with private;
+     new Pdp11.Addressable.Root_Addressable_Type
+     and Pdp11.Drivers.Interrupt_Handler
+   with private;
 
-   procedure Clear_Drivers
-     (Machine : in out Machine_Type'Class);
+   type Machine_Reference is access all Machine_Type'Class;
 
-   procedure Add_Driver
-     (Machine : in out Machine_Type'Class;
-      Driver  : not null access Pdp11.Drivers.Root_Driver_Type'Class;
-      Base    : Address_Type);
+   procedure Create
+     (This : in out Machine_Type'Class;
+      Memory : not null access Pdp11.Addressable.Root_Addressable_Type'Class);
 
    procedure Execute
      (Machine : in out Machine_Type'Class;
@@ -37,6 +36,11 @@ package Pdp11.Machine is
      (Machine  : in out Machine_Type'Class;
       Register : Machine_Register;
       Value    : Word_16);
+
+   overriding procedure Interrupt
+     (Machine  : in out Machine_Type;
+      Priority : Interrupt_Priority_Type;
+      Vector   : Address_Type);
 
    procedure Report (Machine : Machine_Type'Class);
 
@@ -56,36 +60,22 @@ private
    type Vector_Register_Array is
      array (Pdp11.ISA.V_Register_Index) of Vector_96;
 
-   type Driver_Index is range 0 .. 255;
-
-   type Driver_Address_Map is
-     array (Address_Type) of Driver_Index
-     with Pack, Size => 8 * 65536;
-
-   type Driver_Record is
-      record
-         Base   : Address_Type            := 0;
-         Driver : Pdp11.Drivers.Pdp11_Driver;
-      end record;
-
-   type Installed_Driver_Array is
-     array (Driver_Index) of Driver_Record;
-
    type Machine_Type is
-     new Pdp11.Memory.Root_Memory_Type with
+     new Pdp11.Addressable.Root_Addressable_Type
+     and Pdp11.Drivers.Interrupt_Handler with
       record
          Rs                  : Register_Array :=
                                  (0, 1, 2, 3, 4, 5, 6, 7);
          ACs                 : Float_Register_Array := (others => 0.0);
          VRs                 : Vector_Register_Array :=
                                  (others => (others => 0.0));
-         Installed_Drivers   : Installed_Driver_Array;
-         Driver_Map          : Driver_Address_Map := (others => 0);
          Started             : Boolean := False;
-         N, Z, V, C          : Boolean := False;
+         Priority            : Priority_Type := 7;
+         T, N, Z, V, C       : Boolean := False;
          Clock               : ISA.Microsecond_Duration := 0.0;
          Current_Instruction : ISA.Instruction_Type;
          Current_Timing      : ISA.Microsecond_Duration;
+         Memory              : Pdp11.Addressable.Addressable_Reference;
       end record;
 
    overriding function Get_Word_16
@@ -117,6 +107,14 @@ private
      (Machine : in out Machine_Type;
       Address : Address_Type;
       Value   : Float_32);
+
+   procedure Set_PS
+     (Machine : in out Machine_Type'Class;
+      Value   : Word_16);
+
+   function Get_PS
+     (Machine : Machine_Type'Class)
+      return Word_16;
 
    function Get_Register
      (Machine  : Machine_Type'Class;
