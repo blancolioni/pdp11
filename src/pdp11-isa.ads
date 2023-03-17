@@ -37,6 +37,8 @@ package Pdp11.ISA is
       I_MTPS, I_MFPD, I_MTPD, I_MFPS,
       I_BR, I_BEQ, I_BLT, I_BLE,
       I_BMI, I_BLOS, I_BVS, I_BCS,
+      I_BNE, I_BGE, I_BGT,
+      I_BPL, I_BHI, I_BVC, I_BCC,
       I_JMP, I_JSR, I_RTS,
       I_CCC, I_SCC,
       I_MULF, I_MODF, I_ADDF, I_LDF, I_SUBF, I_CMPF, I_STF, I_DIVF,
@@ -64,7 +66,7 @@ package Pdp11.ISA is
      Instruction_Type range I_MOV .. I_MFPS;
 
    subtype Branch_Instruction is
-     Instruction_Type range I_BR .. I_BCS;
+     Instruction_Type range I_BR .. I_BCC;
 
    subtype Floating_Point_Instruction is
      Instruction_Type range I_MULF .. I_NEGF;
@@ -131,7 +133,6 @@ package Pdp11.ISA is
          Word         : Boolean           := True;
          Undefined    : Boolean           := False;
          N, Z, V, C   : Boolean           := False;
-         Negate       : Boolean           := False;
          Src, Dst     : Operand_Type      := (Register_Mode, False, 0);
          Offset       : Word_8            := 0;
          FAC          : FP_Register_Index := 0;

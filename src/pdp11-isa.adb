@@ -58,15 +58,26 @@ package body Pdp11.ISA is
                   14 => I_MTPI,
                   15 => I_SXT);
 
-   To_Br_Op  : constant array (Word_16 range 0 .. 7) of Instruction_Type :=
-                 (0 => I_BR,
-                  1 => I_BEQ,
-                  2 => I_BLT,
-                  3 => I_BLE,
-                  4 => I_BMI,
-                  5 => I_BLOS,
-                  6 => I_BVS,
-                  7 => I_BCS);
+   To_Br_Op            : constant array (Boolean, Word_16 range 0 .. 7)
+     of Instruction_Type
+       := (False =>
+               (0 => I_BR,
+                1 => I_BEQ,
+                2 => I_BLT,
+                3 => I_BLE,
+                4 => I_BMI,
+                5 => I_BLOS,
+                6 => I_BVS,
+                7 => I_BCS),
+           True  =>
+               (0 => I_BR,
+                1 => I_BNE,
+                2 => I_BGE,
+                3 => I_BGT,
+                4 => I_BPL,
+                5 => I_BHI,
+                6 => I_BVC,
+                7 => I_BCC));
 
    function To_Floating_Point_Format_1
      (Opcode : Word_16;
@@ -168,9 +179,8 @@ package body Pdp11.ISA is
       elsif Bits (IR, 11, 14) = 0
         and then IR not in 8#000210# .. 8#000227#  --  BR, negated
       then
-         Rec.Instruction := To_Br_Op (Br_Opcode);
+         Rec.Instruction := To_Br_Op (Br_Negate, Br_Opcode);
          Rec.Offset := Word_8 (IR mod 256);
-         Rec.Negate := Br_Negate;
       elsif Bits (IR, 9, 15) in 8#171# .. 8#174# then
          Rec :=
            To_Floating_Point_Format_1
@@ -280,10 +290,12 @@ package body Pdp11.ISA is
           + Opcode * 2 ** 6
           + Encode (Rec.Dst, 0));
 
-      function Br (Opcode : Word_16) return Word_16
+      function Br (Opcode : Word_16;
+                   Negated : Boolean)
+                   return Word_16
       is ((Opcode / 4) * 2 ** 15
           + (Opcode mod 4) * 2 ** 9
-          + Boolean'Pos (not Rec.Negate) * 2 ** 8
+          + (if Negated then 2 ** 8 else 0)
           + Word_16 (Rec.Offset));
 
    begin
@@ -323,10 +335,18 @@ package body Pdp11.ISA is
                - Instruction_Type'Pos
                  (Register_Double_Operand_Instruction'First));
          when Branch_Instruction =>
-            return Br
-              (Instruction_Type'Pos (Rec.Instruction)
-               - Instruction_Type'Pos
-                 (Branch_Instruction'First));
+            if Rec.Instruction >= I_BNE then
+               return Br
+                 (Instruction_Type'Pos (Rec.Instruction)
+                  - Instruction_Type'Pos (I_BNE)
+                  + 1,
+                  True);
+            else
+               return Br
+                 (Instruction_Type'Pos (Rec.Instruction)
+                  - Instruction_Type'Pos (Branch_Instruction'First),
+                  False);
+            end if;
          when I_SOB =>
             return 8#077000#
             + Word_16 (Rec.Src.Register) * 64
