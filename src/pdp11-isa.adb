@@ -177,7 +177,8 @@ package body Pdp11.ISA is
          Rec.Instruction := I_RTS;
          Rec.Src.Register := Register_Index (Bits (IR, 0, 2));
       elsif Bits (IR, 11, 14) = 0
-        and then IR not in 8#000210# .. 8#000227#  --  BR, negated
+        and then IR not in 8#000210# .. 8#000227#
+        and then IR >= 8#000400#
       then
          Rec.Instruction := To_Br_Op (Br_Negate, Br_Opcode);
          Rec.Offset := Word_8 (IR mod 256);
@@ -340,12 +341,12 @@ package body Pdp11.ISA is
                  (Instruction_Type'Pos (Rec.Instruction)
                   - Instruction_Type'Pos (I_BNE)
                   + 1,
-                  True);
+                  False);
             else
                return Br
                  (Instruction_Type'Pos (Rec.Instruction)
                   - Instruction_Type'Pos (Branch_Instruction'First),
-                  False);
+                  True);
             end if;
          when I_SOB =>
             return 8#077000#

@@ -214,7 +214,8 @@ package body Pdp11.Addressable.Memory is
       if Driver /= null then
          Driver.Set_Word_16 (Address - Base, Value);
       else
-         raise Bad_Address;
+         raise Bad_Address with "bad address: "
+           & Pdp11.Images.Hex_Image (Word_16 (Address));
       end if;
    end Set_Word_16;
 

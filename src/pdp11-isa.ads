@@ -23,6 +23,18 @@ package Pdp11.ISA is
       return Boolean
    is (Operand.Mode = Register_Mode and then not Operand.Deferred);
 
+   Immediate_Operand : constant Operand_Type :=
+                         Operand_Type'
+                           (Mode     => Autoincrement_Mode,
+                            Deferred => False,
+                            Register => 7);
+
+   function Register_Mode
+     (Index : Register_Index;
+      Deferred : Boolean := False)
+      return Operand_Type
+   is (Register_Mode, Deferred, Index);
+
    function Encode
      (Operand : Operand_Type;
       Offset  : Natural)

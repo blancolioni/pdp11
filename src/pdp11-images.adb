@@ -35,18 +35,7 @@ package body Pdp11.Images is
       use Pdp11.ISA;
       Instr_Image : constant String := Rec.Instruction'Image;
       Mnemonic    : constant String :=
-                      (if Rec.Instruction in Branch_Instruction
-                       and then Rec.Negate
-                       then (case Branch_Instruction (Rec.Instruction) is
-                            when I_BR  => "BRN!",
-                            when I_BEQ => "BNE",
-                            when I_BLT => "BGE",
-                            when I_BLE => "BGT",
-                            when I_BMI => "BPL",
-                            when I_BLOS => "BHI",
-                            when I_BVS => "BVC",
-                            when I_BCS  => "BCC")
-                       else Instr_Image (3 .. Instr_Image'Last));
+                      Instr_Image (3 .. Instr_Image'Last);
    begin
       case Rec.Instruction is
          when Double_Operand_Instruction =>
