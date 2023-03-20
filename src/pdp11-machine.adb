@@ -106,7 +106,6 @@ package body Pdp11.Machine is
    procedure Branch
      (Machine     : in out Machine_Type'Class;
       Instruction : Pdp11.ISA.Branch_Instruction;
-      Negate      : Boolean;
       Offset      : Word_8);
 
    procedure Float_Format_1
@@ -156,7 +155,6 @@ package body Pdp11.Machine is
    procedure Branch
      (Machine     : in out Machine_Type'Class;
       Instruction : Pdp11.ISA.Branch_Instruction;
-      Negate      : Boolean;
       Offset      : Word_8)
    is
       use Pdp11.ISA;
@@ -179,8 +177,22 @@ package body Pdp11.Machine is
             Taken := Machine.V;
          when I_BCS =>
             Taken := Machine.C;
+         when I_BNE =>
+            Taken := not Machine.Z;
+         when I_BGE =>
+            Taken := not (Machine.N xor Machine.V);
+         when I_BGT =>
+            Taken := not (Machine.Z or else (Machine.N xor Machine.V));
+         when I_BPL =>
+            Taken := not Machine.N;
+         when I_BHI =>
+            Taken := not (Machine.C or else Machine.Z);
+         when I_BVC =>
+            Taken := not Machine.V;
+         when I_BCC =>
+            Taken := not Machine.C;
       end case;
-      if Taken xor Negate then
+      if Taken then
          Machine.Current_Timing := Machine.Current_Timing + 0.9;
          declare
             PC : Word_16 renames Machine.Rs (7);
@@ -869,7 +881,7 @@ package body Pdp11.Machine is
             Machine.Single_Operand (Rec.Instruction, Rec.Word, Rec.Dst);
 
          when Branch_Instruction =>
-            Machine.Branch (Rec.Instruction, Rec.Negate, Rec.Offset);
+            Machine.Branch (Rec.Instruction, Rec.Offset);
 
          when I_SOB =>
             Machine.Rs (Rec.Src.Register) :=

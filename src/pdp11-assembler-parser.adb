@@ -207,8 +207,7 @@ package body Pdp11.Assembler.Parser is
 
       procedure Branch
         (Name        : String;
-         Instruction : Instruction_Type;
-         Negate      : Boolean);
+         Instruction : Instruction_Type);
 
       procedure Flags
         (Name       : String;
@@ -229,15 +228,13 @@ package body Pdp11.Assembler.Parser is
 
       procedure Branch
         (Name        : String;
-         Instruction : Instruction_Type;
-         Negate      : Boolean)
+         Instruction : Instruction_Type)
       is
       begin
          Name_Table.Insert
            (Name,
             Instruction_Record'
               (Instruction => Instruction,
-               Negate      => Negate,
                Offset      => 0,
                others      => <>));
       end Branch;
@@ -363,23 +360,23 @@ package body Pdp11.Assembler.Parser is
       Operand ("asl", I_ASL, True);
       Operand ("aslb", I_ASL, False);
 
-      Branch ("br", I_BR, False);
-      Branch ("bne", I_BEQ, True);
-      Branch ("beq", I_BEQ, False);
-      Branch ("bge", I_BLT, True);
-      Branch ("blt", I_BLT, False);
-      Branch ("bgt", I_BLE, True);
-      Branch ("ble", I_BLE, False);
-      Branch ("bpl", I_BMI, True);
-      Branch ("bmi", I_BMI, False);
-      Branch ("bhi", I_BLOS, True);
-      Branch ("blos", I_BLOS, False);
-      Branch ("bvc", I_BVS, True);
-      Branch ("bvs", I_BVS, False);
-      Branch ("bcc", I_BCS, True);
-      Branch ("bcs", I_BCS, False);
-      Branch ("bhis", I_BCS, True);
-      Branch ("blo", I_BCS, True);
+      Branch ("br", I_BR);
+      Branch ("bne", I_BNE);
+      Branch ("beq", I_BEQ);
+      Branch ("bge", I_BGE);
+      Branch ("blt", I_BLT);
+      Branch ("bgt", I_BGT);
+      Branch ("ble", I_BLE);
+      Branch ("bpl", I_BPL);
+      Branch ("bmi", I_BMI);
+      Branch ("bhi", I_BHI);
+      Branch ("blos", I_BLOS);
+      Branch ("bvc", I_BVC);
+      Branch ("bvs", I_BVS);
+      Branch ("bcc", I_BCC);
+      Branch ("bcs", I_BCS);
+      Branch ("bhis", I_BCS);
+      Branch ("blo", I_BCC);
 
       Flags ("sen", True, N => True);
       Flags ("sez", True, Z => True);
