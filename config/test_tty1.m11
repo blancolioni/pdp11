@@ -10,4 +10,4 @@ mov #32, r0                 ; 00010101 11000000 00010100 00000000
    bne 1
 2: movb #10, @#tty_buffer
    movb #1, @#tty_enable
-   rts pc
+3: br 3

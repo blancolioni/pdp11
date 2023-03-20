@@ -1,4 +1,4 @@
-with Pdp11.Drivers;
+with Pdp11.Devices;
 
 package Pdp11.Addressable.Memory is
 
@@ -10,36 +10,35 @@ package Pdp11.Addressable.Memory is
    function Create
      return Memory_Reference;
 
-   procedure Clear_Drivers
+   procedure Clear_Devices
      (This : in out Root_Memory_Type'Class);
 
-   procedure Add_Driver
+   procedure Add_Device
      (This     : not null access Root_Memory_Type'Class;
-      Driver   : not null access Pdp11.Drivers.Root_Driver_Type'Class;
-      Base     : Address_Type);
+      Device   : not null access Pdp11.Devices.Instance'Class);
 
 private
 
-   type Driver_Index is range 0 .. 255;
+   type Device_Index is range 0 .. 255;
 
-   type Driver_Address_Map is
-     array (Address_Type) of Driver_Index
+   type Device_Address_Map is
+     array (Address_Type) of Device_Index
      with Pack, Size => 8 * 65536;
 
-   type Driver_Record is
+   type Device_Record is
       record
          Base   : Address_Type            := 0;
-         Driver : Pdp11.Drivers.Pdp11_Driver;
+         Device : Pdp11.Devices.Reference;
       end record;
 
-   type Installed_Driver_Array is
-     array (Driver_Index) of Driver_Record;
+   type Installed_Device_Array is
+     array (Device_Index) of Device_Record;
 
    type Root_Memory_Type is
      new Root_Addressable_Type with
       record
-         Installed_Drivers   : Installed_Driver_Array;
-         Driver_Map          : Driver_Address_Map := (others => 0);
+         Installed_Devices   : Installed_Device_Array;
+         Device_Map          : Device_Address_Map := (others => 0);
       end record;
 
    overriding function Get_Word_16

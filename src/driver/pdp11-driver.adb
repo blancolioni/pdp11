@@ -10,9 +10,10 @@ with Pdp11.Machine;
 
 with Pdp11.Addressable.Memory;
 
-with Pdp11.Drivers.RAM;
-with Pdp11.Drivers.ROM;
-with Pdp11.Drivers.TTY;
+with Pdp11.Devices.Line_Clock;
+with Pdp11.Devices.RAM;
+with Pdp11.Devices.ROM;
+--  with Pdp11.Devices.TTY;
 
 with Pdp11.Options;
 with Pdp11.Paths;
@@ -20,7 +21,8 @@ with Pdp11.Tests;
 
 procedure Pdp11.Driver is
    Assembly : Pdp11.Assembler.Assembly_Type;
-   Machine  : Pdp11.Machine.Machine_Type;
+   Machine  : Pdp11.Machine.Instance;
+
 begin
 
    if not Ada.Directories.Exists (".pdp11-options") then
@@ -56,35 +58,46 @@ begin
          declare
             Memory : constant Pdp11.Addressable.Memory.Memory_Reference :=
                        Pdp11.Addressable.Memory.Create;
+            Device_List : constant array (Positive range <>)
+              of Pdp11.Devices.Reference
+                := (Pdp11.Devices.Line_Clock.Create,
+                    Pdp11.Devices.RAM.Create (0, 255),
+                    Pdp11.Devices.RAM.Create (4096, 4095),
+                    Pdp11.Devices.ROM.Create (Base_Address, Output));
+
          begin
-            Memory.Add_Driver
-              (Driver => Pdp11.Drivers.ROM.Create_ROM_Driver (Output),
-               Base   => Base_Address);
-            Memory.Add_Driver
-              (Driver => Pdp11.Drivers.RAM.Create_RAM (4095),
-               Base   => 4096);
-            Memory.Add_Driver
-              (Driver => Pdp11.Drivers.RAM.Create_RAM (256),
-               Base   => 0);
-            Memory.Add_Driver
-              (Driver => Pdp11.Drivers.TTY.TTY_Driver,
-               Base   => 16#FF80#);
 
             Machine.Create (Memory);
+
+            for Device of Device_List loop
+               Machine.Add_Device (Device);
+            end loop;
+
+            --  Memory.Add_Device
+            --   (Driver => Pdp11.Drivers.ROM.Create_ROM_Driver (Output),
+            --    Base   => Base_Address);
+            --  Memory.Add_Driver
+            --   (Driver => Pdp11.Drivers.RAM.Create_RAM (4095),
+            --    Base   => 4096);
+            --  Memory.Add_Driver
+            --   (Driver => Pdp11.Drivers.RAM.Create_RAM (256),
+            --    Base   => 0);
+            --  Memory.Add_Driver
+            --   (Driver => Pdp11.Drivers.TTY.TTY_Driver,
+            --    Base   => 16#FF80#);
 
             Machine.Set_Register (7, Word_16 (Base_Address));
             Machine.Set_Register (6, 16#1FFE#);
          end;
 
-         declare
-            Time_Limit : constant Natural := Pdp11.Options.Time_Limit;
-            Quantum    : constant Pdp11.ISA.Microsecond_Duration :=
-                           (if Time_Limit = 0
-                            then Pdp11.ISA.Microsecond_Duration'Last
-                            else Pdp11.ISA.Microsecond_Duration (Time_Limit));
-            Used       : Pdp11.ISA.Microsecond_Duration;
          begin
-            Machine.Execute (Quantum, Used);
+            if Pdp11.Options.Time_Limit = 0 then
+               Machine.Start;
+            else
+               Machine.Execute_Quantum
+                 (Pdp11.ISA.Microsecond_Duration
+                    (Pdp11.Options.Time_Limit));
+            end if;
          exception
             when Pdp11.Machine.Halted =>
                if not Pdp11.Options.Quiet then

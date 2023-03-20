@@ -16,144 +16,157 @@ package body Pdp11.Machine is
    function Sqrt (X : Float_32) return Float_32
                   renames Float_32_Functions.Sqrt;
 
-   function Flags_Image (Machine : Machine_Type'Class) return String;
-   function Clock_Image (Machine : Machine_Type'Class) return String;
+   function Flags_Image (This : Instance'Class) return String;
+   function Clock_Image (This : Instance'Class) return String;
 
-   procedure Next (Machine : in out Machine_Type'Class);
+   procedure Next (This : in out Instance'Class);
 
    function Get_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Word    : Boolean)
       return Word_16;
 
    function Get_Operand_Address
-     (Machine : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Size    : Positive)
       return Address_Type;
 
    function Get_Operand_Address
-     (Machine : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Word    : Boolean)
       return Address_Type
    is (Get_Operand_Address
-       (Machine, Operand,
+       (This, Operand,
           (if Word then 2 else 1)));
 
    function Get_Float_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type)
       return Float_32;
 
    procedure Set_Float_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Value   : Float_32);
 
    procedure Update_Float_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Update  : not null access
         procedure (X : in out Float_32));
 
    function Get_Vector_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type)
       return Vector_96;
 
    procedure Set_Vector_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Value   : Vector_96);
 
    procedure Write_Register
-     (Machine  : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Register : Pdp11.ISA.Register_Index;
       Word     : Boolean;
       Value    : Word_16);
 
    procedure Set_NZ
-     (Machine  : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Word     : Boolean;
       Value    : Word_16);
 
    procedure Set_VC
-     (Machine  : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Word     : Boolean;
       X, Y, Z  : Word_16);
 
    procedure Double_Operand
-     (Machine : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Op      : Pdp11.ISA.Double_Operand_Instruction;
       Word    : Boolean;
       Src     : Pdp11.ISA.Operand_Type;
       Dst     : Pdp11.ISA.Operand_Type);
 
    procedure Register_Double_Operand
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Op      : Pdp11.ISA.Register_Double_Operand_Instruction;
       Src     : Pdp11.ISA.Operand_Type;
       Dst     : Pdp11.ISA.Register_Index);
 
    procedure Single_Operand
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Op      : Pdp11.ISA.Single_Operand_Instruction;
       Word    : Boolean;
       Dst     : Pdp11.ISA.Operand_Type);
 
    procedure Branch
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : Pdp11.ISA.Branch_Instruction;
       Offset      : Word_8);
 
    procedure Float_Format_1
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Floating_Point_F1;
       AC          : ISA.FP_Register_Index;
       Operand     : ISA.Operand_Type);
 
    procedure Float_Format_2
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Floating_Point_F2;
       Operand     : ISA.Operand_Type);
 
    procedure Vector_Format_1
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Vector_F1;
       VAC         : ISA.V_Register_Index;
       Operand     : ISA.Operand_Type);
 
    procedure Vector_Format_2
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Vector_F2;
       VAC_1       : ISA.V_Register_Index;
       VAC_2       : ISA.V_Register_Index);
 
    procedure Vector_Format_3
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Vector_F3;
       VAC         : ISA.V_Register_Index);
 
    procedure Raise_Bus_Error
-     (Machine : Machine_Type'Class;
+     (This : Instance'Class;
       Address : Address_Type;
       Write   : Boolean)
      with No_Return, Unreferenced;
 
    --  procedure Raise_ISA_Error
-   --    (Machine : Machine_Type'Class;
+   --    (This : Instance'Class;
    --     Address : Address_Type;
    --     IR      : Word_16)
    --  is null;
+
+   ----------------
+   -- Add_Device --
+   ----------------
+
+   overriding procedure Add_Device
+     (This     : in out Instance;
+      Device   : not null access Pdp11.Devices.Instance'Class)
+   is
+   begin
+      This.Memory.Add_Device (Device);
+      This.Devices.Append (Pdp11.Devices.Reference (Device));
+   end Add_Device;
 
    ------------
    -- Branch --
    ------------
 
    procedure Branch
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : Pdp11.ISA.Branch_Instruction;
       Offset      : Word_8)
    is
@@ -164,38 +177,38 @@ package body Pdp11.Machine is
          when I_BR =>
             Taken := True;
          when I_BEQ =>
-            Taken := Machine.Z;
+            Taken := This.Z;
          when I_BLT =>
-            Taken := Machine.N xor Machine.V;
+            Taken := This.N xor This.V;
          when I_BLE =>
-            Taken := Machine.Z or else (Machine.N xor Machine.V);
+            Taken := This.Z or else (This.N xor This.V);
          when I_BMI =>
-            Taken := Machine.N;
+            Taken := This.N;
          when I_BLOS =>
-            Taken := Machine.C or else Machine.Z;
+            Taken := This.C or else This.Z;
          when I_BVS =>
-            Taken := Machine.V;
+            Taken := This.V;
          when I_BCS =>
-            Taken := Machine.C;
+            Taken := This.C;
          when I_BNE =>
-            Taken := not Machine.Z;
+            Taken := not This.Z;
          when I_BGE =>
-            Taken := not (Machine.N xor Machine.V);
+            Taken := not (This.N xor This.V);
          when I_BGT =>
-            Taken := not (Machine.Z or else (Machine.N xor Machine.V));
+            Taken := not (This.Z or else (This.N xor This.V));
          when I_BPL =>
-            Taken := not Machine.N;
+            Taken := not This.N;
          when I_BHI =>
-            Taken := not (Machine.C or else Machine.Z);
+            Taken := not (This.C or else This.Z);
          when I_BVC =>
-            Taken := not Machine.V;
+            Taken := not This.V;
          when I_BCC =>
-            Taken := not Machine.C;
+            Taken := not This.C;
       end case;
       if Taken then
-         Machine.Current_Timing := Machine.Current_Timing + 0.9;
+         This.Current_Timing := This.Current_Timing + 0.9;
          declare
-            PC : Word_16 renames Machine.Rs (7);
+            PC : Word_16 renames This.Rs (7);
             New_PC : constant Word_16 :=
                        (if Offset < 128
                         then PC + 2 * Word_16 (Offset)
@@ -206,12 +219,24 @@ package body Pdp11.Machine is
       end if;
    end Branch;
 
-   -----------------
+   -------------------
+   -- Clear_Devices --
+   -------------------
+
+   overriding procedure Clear_Devices
+     (This : in out Instance)
+   is
+   begin
+      This.Memory.Clear_Devices;
+      This.Devices.Clear;
+   end Clear_Devices;
+
+-----------------
    -- Clock_Image --
    -----------------
 
-   function Clock_Image (Machine : Machine_Type'Class) return String is
-      It : Natural := Natural (Machine.Clock * 100.0);
+   function Clock_Image (This : Instance'Class) return String is
+      It : Natural := Natural (This.Clock * 100.0);
       Img : String := "         ";
       Dec : Integer := 2;
    begin
@@ -233,11 +258,12 @@ package body Pdp11.Machine is
    ------------
 
    procedure Create
-     (This   : in out Machine_Type'Class;
-      Memory : not null access Pdp11.Addressable.Root_Addressable_Type'Class)
+     (This : in out Instance'Class;
+      Memory : not null access
+        Pdp11.Addressable.Memory.Root_Memory_Type'Class)
    is
    begin
-      This.Memory := Pdp11.Addressable.Addressable_Reference (Memory);
+      This.Memory := Pdp11.Addressable.Memory.Memory_Reference (Memory);
    end Create;
 
    --------------------
@@ -245,7 +271,7 @@ package body Pdp11.Machine is
    --------------------
 
    procedure Double_Operand
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Op      : Pdp11.ISA.Double_Operand_Instruction;
       Word    : Boolean;
       Src     : Pdp11.ISA.Operand_Type;
@@ -255,16 +281,16 @@ package body Pdp11.Machine is
       Timing   : constant Microsecond_Duration :=
                    Src_Operand_Timing (Op, Src)
                    + Dst_Operand_Timing (Op, Dst);
-      X        : constant Word_16 := Machine.Get_Operand_Value (Src, Word);
+      X        : constant Word_16 := This.Get_Operand_Value (Src, Word);
       Dst_Addr : constant Address_Type :=
         (if Is_Register_Operand (Dst) then 0
-         else Machine.Get_Operand_Address (Dst, Word));
+         else This.Get_Operand_Address (Dst, Word));
       Y        : constant Word_16 :=
         (if Op = I_MOV
          then 0
          elsif Is_Register_Operand (Dst)
-         then Machine.Rs (Dst.Register)
-         else Machine.Get_Word_16 (Dst_Addr));
+         then This.Rs (Dst.Register)
+         else This.Get_Word_16 (Dst_Addr));
 
       procedure Store (Z : Word_16);
 
@@ -275,11 +301,11 @@ package body Pdp11.Machine is
       procedure Store (Z : Word_16) is
       begin
          if Is_Register_Operand (Dst) then
-            Machine.Write_Register (Dst.Register, Word, Z);
+            This.Write_Register (Dst.Register, Word, Z);
          elsif Word then
-            Machine.Set_Word_16 (Dst_Addr, Z);
+            This.Set_Word_16 (Dst_Addr, Z);
          else
-            Machine.Set_Word_8 (Dst_Addr, Word_8 (Z mod 256));
+            This.Set_Word_8 (Dst_Addr, Word_8 (Z mod 256));
          end if;
 
          if Trace_Execution then
@@ -299,23 +325,23 @@ package body Pdp11.Machine is
       case Op is
          when I_MOV =>
             Store (X);
-            Machine.Set_NZ (Word, X);
-            Machine.V := False;
+            This.Set_NZ (Word, X);
+            This.V := False;
 
          when I_CMP =>
             declare
                Z : constant Word_16 := X - Y;
             begin
-               Machine.Set_NZ (Word, Z);
-               Machine.Set_VC (Word, X, (not Y + 1), Z);
+               This.Set_NZ (Word, Z);
+               This.Set_VC (Word, X, (not Y + 1), Z);
             end;
 
          when I_BIT =>
             declare
                Z : constant Word_16 := X and Y;
             begin
-               Machine.Set_NZ (Word, Z);
-               Machine.V := False;
+               This.Set_NZ (Word, Z);
+               This.V := False;
             end;
 
          when I_BIC =>
@@ -323,8 +349,8 @@ package body Pdp11.Machine is
                Z : constant Word_16 := (not X) and Y;
             begin
                Store (Z);
-               Machine.Set_NZ (Word, Z);
-               Machine.V := False;
+               This.Set_NZ (Word, Z);
+               This.V := False;
             end;
 
          when I_BIS =>
@@ -332,8 +358,8 @@ package body Pdp11.Machine is
                Z : constant Word_16 := X or Y;
             begin
                Store (Z);
-               Machine.Set_NZ (Word, Z);
-               Machine.V := False;
+               This.Set_NZ (Word, Z);
+               This.V := False;
             end;
 
          when I_ADD =>
@@ -341,8 +367,8 @@ package body Pdp11.Machine is
                Z : constant Word_16 := X + Y;
             begin
                Store (Z);
-               Machine.Set_NZ (Word, Z);
-               Machine.Set_VC (Word, X, Y, Z);
+               This.Set_NZ (Word, Z);
+               This.Set_VC (Word, X, Y, Z);
             end;
 
          when I_SUB =>
@@ -350,19 +376,64 @@ package body Pdp11.Machine is
                Z : constant Word_16 := Y - X;
             begin
                Store (Z);
-               Machine.Set_NZ (Word, Z);
-               Machine.Set_VC (Word, X, (not Y) + 1, Z);
+               This.Set_NZ (Word, Z);
+               This.Set_VC (Word, X, (not Y) + 1, Z);
             end;
       end case;
-      Machine.Current_Timing := Machine.Current_Timing + Timing;
+      This.Current_Timing := This.Current_Timing + Timing;
    end Double_Operand;
 
-   -------------
-   -- Execute --
-   -------------
+   ------------------------------
+   -- Execute_Next_Instruction --
+   ------------------------------
 
-   procedure Execute
-     (Machine : in out Machine_Type'Class;
+   procedure Execute_Next_Instruction
+     (This : in out Instance'Class)
+   is
+      use Pdp11.ISA;
+   begin
+      if not This.Started then
+         This.Rs (7) := This.Get_Word_16 (16#FFFE#);
+         This.Started := True;
+         This.Clock := 0.0;
+      end if;
+
+      declare
+         Start : constant Microsecond_Duration := This.Clock;
+      begin
+         This.Next;
+
+         declare
+            Finish : constant Microsecond_Duration := This.Clock;
+            Elapsed : constant Microsecond_Duration := Finish - Start;
+         begin
+            for Device of This.Devices loop
+               Device.Tick (Elapsed, This'Unchecked_Access);
+            end loop;
+         end;
+      end;
+
+   end Execute_Next_Instruction;
+
+   ---------------------
+   -- Execute_Quantum --
+   ---------------------
+
+   procedure Execute_Quantum
+     (This    : in out Instance'Class;
+      Quantum : Pdp11.ISA.Microsecond_Duration)
+   is
+      Used : Pdp11.ISA.Microsecond_Duration with Unreferenced;
+   begin
+      This.Execute_Quantum (Quantum, Used);
+   end Execute_Quantum;
+
+   ---------------------
+   -- Execute_Quantum --
+   ---------------------
+
+   procedure Execute_Quantum
+     (This : in out Instance'Class;
       Quantum : ISA.Microsecond_Duration;
       Used    : out ISA.Microsecond_Duration)
    is
@@ -370,45 +441,39 @@ package body Pdp11.Machine is
       Start_Clock : Microsecond_Duration;
       End_Clock   : Microsecond_Duration;
    begin
-      if not Machine.Started then
-         Machine.Rs (7) := Machine.Get_Word_16 (16#FFFE#);
-         Machine.Started := True;
-         Machine.Clock := 0.0;
-      end if;
-
       Trace_Execution := Pdp11.Options.Trace;
 
-      Start_Clock := Machine.Clock;
-      End_Clock   := Machine.Clock + Quantum;
+      Start_Clock := This.Clock;
+      End_Clock   := This.Clock + Quantum;
 
-      while Machine.Clock < End_Clock loop
-         Machine.Next;
+      while This.Clock < End_Clock loop
+         This.Execute_Next_Instruction;
       end loop;
 
-      Used := Machine.Clock - Start_Clock;
+      Used := This.Clock - Start_Clock;
 
    exception
       when E : Pdp11.Addressable.Bad_Address =>
          Ada.Text_IO.Put_Line
            (Ada.Exceptions.Exception_Message (E));
-         Used := Machine.Clock - Start_Clock;
-   end Execute;
+         Used := This.Clock - Start_Clock;
+   end Execute_Quantum;
 
    -----------------
    -- Flags_Image --
    -----------------
 
-   function Flags_Image (Machine : Machine_Type'Class) return String is
+   function Flags_Image (This : Instance'Class) return String is
       function Img (Ch : Character;
                     Set : Boolean)
                     return Character
       is (if Set then Ch else '-');
 
    begin
-      return (Img ('N', Machine.N),
-              Img ('Z', Machine.Z),
-              Img ('V', Machine.V),
-              Img ('C', Machine.C));
+      return (Img ('N', This.N),
+              Img ('Z', This.Z),
+              Img ('V', This.V),
+              Img ('C', This.C));
    end Flags_Image;
 
    --------------------
@@ -416,7 +481,7 @@ package body Pdp11.Machine is
    --------------------
 
    procedure Float_Format_1
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Floating_Point_F1;
       AC          : ISA.FP_Register_Index;
       Operand     : ISA.Operand_Type)
@@ -471,8 +536,8 @@ package body Pdp11.Machine is
         (Value : Float_32)
       is
       begin
-         Machine.Z := Value = 0.0;
-         Machine.N := Value < 0.0;
+         This.Z := Value = 0.0;
+         This.N := Value < 0.0;
       end Set_Flags;
 
    begin
@@ -482,26 +547,26 @@ package body Pdp11.Machine is
          end if;
 
          if Instruction = I_STF then
-            Machine.ACs (FP_Register_Index (Operand.Register)) :=
-              Machine.ACs (AC);
+            This.ACs (FP_Register_Index (Operand.Register)) :=
+              This.ACs (AC);
          else
             Operate
-              (Machine.ACs (FP_Register_Index (Operand.Register)),
-               Machine.ACs (AC));
+              (This.ACs (FP_Register_Index (Operand.Register)),
+               This.ACs (AC));
          end if;
 
          if Trace_Execution then
             Ada.Text_IO.Put_Line
               ("ac" & Character'Val (48 + AC) & " <- "
-               & Machine.ACs (AC)'Image);
+               & This.ACs (AC)'Image);
          end if;
 
       elsif Instruction = I_STF then
-         Machine.Set_Float_Operand_Value
-           (Operand, Machine.ACs (AC));
+         This.Set_Float_Operand_Value
+           (Operand, This.ACs (AC));
       else
-         Operate (Machine.Get_Float_Operand_Value (Operand),
-                  Machine.ACs (AC));
+         Operate (This.Get_Float_Operand_Value (Operand),
+                  This.ACs (AC));
       end if;
    end Float_Format_1;
 
@@ -510,7 +575,7 @@ package body Pdp11.Machine is
    --------------------
 
    procedure Float_Format_2
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Floating_Point_F2;
       Operand     : ISA.Operand_Type)
    is
@@ -518,7 +583,7 @@ package body Pdp11.Machine is
    begin
       case Instruction is
          when I_CLRF =>
-            Machine.Set_Float_Operand_Value (Operand, 0.0);
+            This.Set_Float_Operand_Value (Operand, 0.0);
          when I_TSTF =>
             null;
          when I_ABSF =>
@@ -535,7 +600,7 @@ package body Pdp11.Machine is
                end Update;
 
             begin
-               Machine.Update_Float_Operand_Value
+               This.Update_Float_Operand_Value
                  (Operand, Update'Access);
             end;
 
@@ -553,7 +618,7 @@ package body Pdp11.Machine is
                end Update;
 
             begin
-               Machine.Update_Float_Operand_Value
+               This.Update_Float_Operand_Value
                  (Operand, Update'Access);
             end;
       end case;
@@ -565,12 +630,12 @@ package body Pdp11.Machine is
    ------------------
 
    overriding function Get_Float_32
-     (Machine : Machine_Type;
+     (This : Instance;
       Address : Address_Type)
       return Float_32
    is
    begin
-      return Machine.Memory.Get_Float_32 (Address);
+      return This.Memory.Get_Float_32 (Address);
    end Get_Float_32;
 
    -----------------------------
@@ -578,7 +643,7 @@ package body Pdp11.Machine is
    -----------------------------
 
    function Get_Float_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type)
       return Float_32
    is
@@ -590,13 +655,13 @@ package body Pdp11.Machine is
          if Operand.Register > Register_Index (FP_Register_Index'Last) then
             raise ISA_Error;
          end if;
-         return Machine.ACs (FP_Register_Index (Operand.Register));
+         return This.ACs (FP_Register_Index (Operand.Register));
       else
          declare
             A  : constant Address_Type :=
-                   Machine.Get_Operand_Address (Operand, 4);
+                   This.Get_Operand_Address (Operand, 4);
          begin
-            return Machine.Get_Float_32 (A);
+            return This.Get_Float_32 (A);
          end;
       end if;
    end Get_Float_Operand_Value;
@@ -606,14 +671,14 @@ package body Pdp11.Machine is
    -------------------------
 
    function Get_Operand_Address
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Size    : Positive)
       return Address_Type
    is
       use Pdp11.ISA;
-      R  : Word_16 renames Machine.Rs (Operand.Register);
-      PC : Word_16 renames Machine.Rs (7);
+      R  : Word_16 renames This.Rs (Operand.Register);
+      PC : Word_16 renames This.Rs (7);
       A  : Address_Type := 0;
    begin
       case Operand.Mode is
@@ -646,7 +711,7 @@ package body Pdp11.Machine is
          when Index_Mode =>
             declare
                Index : constant Word_16 :=
-                         Machine.Get_Word_16 (Address_Type (PC));
+                         This.Get_Word_16 (Address_Type (PC));
             begin
                PC := PC + 2;
                A := Address_Type (R + Index);
@@ -654,7 +719,7 @@ package body Pdp11.Machine is
       end case;
 
       if Operand.Deferred then
-         A := Address_Type (Machine.Get_Word_16 (A));
+         A := Address_Type (This.Get_Word_16 (A));
       end if;
 
       return A;
@@ -665,7 +730,7 @@ package body Pdp11.Machine is
    -----------------------
 
    function Get_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Word    : Boolean)
       return Word_16
@@ -673,34 +738,34 @@ package body Pdp11.Machine is
       use Pdp11.ISA;
    begin
       if Pdp11.ISA.Is_Register_Operand (Operand) then
-         return Machine.Rs (Operand.Register);
+         return This.Rs (Operand.Register);
       else
          declare
             Address : constant Address_Type :=
-                        Machine.Get_Operand_Address (Operand, Word);
+                        This.Get_Operand_Address (Operand, Word);
          begin
             if Trace_Execution then
                Ada.Text_IO.Put (" (" & Hex_Image (Word_16 (Address)) & ")");
             end if;
 
             if Address mod 2 = 1 then
-               Machine.Current_Timing := Machine.Current_Timing + 0.6;
+               This.Current_Timing := This.Current_Timing + 0.6;
             end if;
 
             if Word then
-               return Machine.Get_Word_16 (Address);
+               return This.Get_Word_16 (Address);
             else
-               return Word_16 (Machine.Get_Word_8 (Address));
+               return Word_16 (This.Get_Word_8 (Address));
             end if;
          end;
       end if;
    end Get_Operand_Value;
 
    function Get_PS
-     (Machine : Machine_Type'Class)
+     (This : Instance'Class)
       return Word_16
    is
-      PSW : Word_16 := Word_16 (Machine.Priority);
+      PSW : Word_16 := Word_16 (This.Priority);
 
       procedure Get (X : Boolean);
 
@@ -714,11 +779,11 @@ package body Pdp11.Machine is
       end Get;
 
    begin
-      Get (Machine.T);
-      Get (Machine.N);
-      Get (Machine.Z);
-      Get (Machine.V);
-      Get (Machine.C);
+      Get (This.T);
+      Get (This.N);
+      Get (This.Z);
+      Get (This.V);
+      Get (This.C);
 
       return PSW;
    end Get_PS;
@@ -728,7 +793,7 @@ package body Pdp11.Machine is
    ------------------------------
 
    function Get_Vector_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type)
       return Vector_96
    is
@@ -740,34 +805,34 @@ package body Pdp11.Machine is
          if Operand.Register > Register_Index (V_Register_Index'Last) then
             raise ISA_Error;
          end if;
-         return Machine.VRs (V_Register_Index (Operand.Register));
+         return This.VRs (V_Register_Index (Operand.Register));
       else
          declare
             A  : Address_Type :=
-                   Machine.Get_Operand_Address (Operand, 4);
-            X  : constant Float_32 := Machine.Get_Float_32 (A);
+                   This.Get_Operand_Address (Operand, 4);
+            X  : constant Float_32 := This.Get_Float_32 (A);
             Y  : Float_32;
             Z  : Float_32;
          begin
             if Operand.Mode in Autodecrement_Mode | Autoincrement_Mode
               and then not Operand.Deferred
             then
-               A := Machine.Get_Operand_Address (Operand, 4);
+               A := This.Get_Operand_Address (Operand, 4);
             else
                A := A + 4;
             end if;
 
-            Y := Machine.Get_Float_32 (A);
+            Y := This.Get_Float_32 (A);
 
             if Operand.Mode in Autodecrement_Mode | Autoincrement_Mode
               and then not Operand.Deferred
             then
-               A := Machine.Get_Operand_Address (Operand, 4);
+               A := This.Get_Operand_Address (Operand, 4);
             else
                A := A + 4;
             end if;
 
-            Z := Machine.Get_Float_32 (A);
+            Z := This.Get_Float_32 (A);
 
             return (X, Y, Z);
          end;
@@ -779,12 +844,12 @@ package body Pdp11.Machine is
    ----------------
 
    overriding function Get_Word_8
-     (Machine : Machine_Type;
+     (This : Instance;
       Address : Address_Type)
       return Word_8
    is
    begin
-      return Machine.Memory.Get_Word_8 (Address);
+      return This.Memory.Get_Word_8 (Address);
    end Get_Word_8;
 
    -----------------
@@ -792,12 +857,12 @@ package body Pdp11.Machine is
    -----------------
 
    overriding function Get_Word_16
-     (Machine : Machine_Type;
+     (This : Instance;
       Address : Address_Type)
       return Word_16
    is
    begin
-      return Machine.Memory.Get_Word_16 (Address);
+      return This.Memory.Get_Word_16 (Address);
    end Get_Word_16;
 
    ---------------
@@ -805,7 +870,7 @@ package body Pdp11.Machine is
    ---------------
 
    overriding procedure Interrupt
-     (Machine  : in out Machine_Type;
+     (This  : in out Instance;
       Priority : Interrupt_Priority_Type;
       Vector   : Address_Type)
    is
@@ -817,21 +882,21 @@ package body Pdp11.Machine is
 
       procedure Push (X : Word_16) is
       begin
-         Machine.Rs (6) := Machine.Rs (6) - 2;
-         Machine.Set_Word_16 (Address_Type (Machine.Rs (6)), X);
+         This.Rs (6) := This.Rs (6) - 2;
+         This.Set_Word_16 (Address_Type (This.Rs (6)), X);
       end Push;
 
    begin
-      if Priority > Machine.Priority then
+      if Priority > This.Priority then
          Ada.Text_IO.Put_Line
            ("interrupt: priority" & Priority'Image
             & ", vector " & Pdp11.Images.Hex_Image (Word_16 (Vector)));
-         Push (Machine.Get_PS);
-         Push (Machine.Rs (7));
-         Machine.Rs (7) := Machine.Get_Word_16 (Vector);
-         Machine.Set_PS (Machine.Get_Word_16 (Vector + 2));
-         Machine.Current_Timing :=
-           Pdp11.ISA."+" (Machine.Current_Timing, 7.2);
+         Push (This.Get_PS);
+         Push (This.Rs (7));
+         This.Rs (7) := This.Get_Word_16 (Vector);
+         This.Set_PS (This.Get_Word_16 (Vector + 2));
+         This.Current_Timing :=
+           Pdp11.ISA."+" (This.Current_Timing, 7.2);
       end if;
    end Interrupt;
 
@@ -839,20 +904,20 @@ package body Pdp11.Machine is
    -- Next --
    ----------
 
-   procedure Next (Machine : in out Machine_Type'Class) is
+   procedure Next (This : in out Instance'Class) is
       use Pdp11.ISA;
-      PC : Word_16 renames Machine.Rs (7);
-      SP : Word_16 renames Machine.Rs (6);
+      PC : Word_16 renames This.Rs (7);
+      SP : Word_16 renames This.Rs (6);
       IR : constant Word_16 :=
-             Machine.Get_Word_16 (Address_Type (PC));
+             This.Get_Word_16 (Address_Type (PC));
       Rec : constant Instruction_Record := Decode (IR);
    begin
 
       if Trace_Execution then
          Ada.Text_IO.Put
-           (Clock_Image (Machine)
+           (Clock_Image (This)
             & " "
-            & Flags_Image (Machine)
+            & Flags_Image (This)
             & " "
             & Hex_Image (PC) & ": " & Octal_Image (IR)
             & " " & Image (Rec));
@@ -860,8 +925,8 @@ package body Pdp11.Machine is
 
       PC := PC + 2;
 
-      Machine.Current_Instruction := Rec.Instruction;
-      Machine.Current_Timing :=
+      This.Current_Instruction := Rec.Instruction;
+      This.Current_Timing :=
         ISA.Basic_Timing (Rec.Instruction);
 
       if IR = 0 then
@@ -870,47 +935,47 @@ package body Pdp11.Machine is
 
       case Rec.Instruction is
          when Double_Operand_Instruction =>
-            Machine.Double_Operand
+            This.Double_Operand
               (Rec.Instruction, Rec.Word, Rec.Src, Rec.Dst);
 
          when Register_Double_Operand_Instruction =>
-            Machine.Register_Double_Operand
+            This.Register_Double_Operand
               (Rec.Instruction, Rec.Src, Rec.Dst.Register);
 
          when Single_Operand_Instruction =>
-            Machine.Single_Operand (Rec.Instruction, Rec.Word, Rec.Dst);
+            This.Single_Operand (Rec.Instruction, Rec.Word, Rec.Dst);
 
          when Branch_Instruction =>
-            Machine.Branch (Rec.Instruction, Rec.Offset);
+            This.Branch (Rec.Instruction, Rec.Offset);
 
          when I_SOB =>
-            Machine.Rs (Rec.Src.Register) :=
-              Machine.Rs (Rec.Src.Register) - 1;
-            if Machine.Rs (Rec.Src.Register) /= 0 then
+            This.Rs (Rec.Src.Register) :=
+              This.Rs (Rec.Src.Register) - 1;
+            if This.Rs (Rec.Src.Register) /= 0 then
                declare
-                  PC     : Word_16 renames Machine.Rs (7);
+                  PC     : Word_16 renames This.Rs (7);
                begin
                   PC := PC - 2 * Word_16 (Rec.Offset);
                end;
             end if;
 
          when I_JMP =>
-            PC := Word_16 (Machine.Get_Operand_Address (Rec.Dst, True));
+            PC := Word_16 (This.Get_Operand_Address (Rec.Dst, True));
 
          when I_JSR =>
             declare
                Destination : constant Address_Type :=
-                               Machine.Get_Operand_Address (Rec.Dst, True);
+                               This.Get_Operand_Address (Rec.Dst, True);
             begin
                if Rec.Src.Register /= 7 then
-                  Machine.Rs (Rec.Src.Register) := PC;
+                  This.Rs (Rec.Src.Register) := PC;
                end if;
                SP := SP - 2;
-               Machine.Set_Word_16
-                 (Address_Type (SP), Machine.Rs (Rec.Src.Register));
+               This.Set_Word_16
+                 (Address_Type (SP), This.Rs (Rec.Src.Register));
                if Trace_Execution then
                   Ada.Text_IO.Put
-                    (" (" & Hex_Image (Machine.Rs (Rec.Src.Register))
+                    (" (" & Hex_Image (This.Rs (Rec.Src.Register))
                      & " -> " & Hex_Image (SP) & ")");
                end if;
 
@@ -918,13 +983,13 @@ package body Pdp11.Machine is
             end;
 
          when I_RTS =>
-            PC := Machine.Rs (Rec.Src.Register);
-            Machine.Rs (Rec.Src.Register) :=
-              Machine.Get_Word_16 (Address_Type (SP));
+            PC := This.Rs (Rec.Src.Register);
+            This.Rs (Rec.Src.Register) :=
+              This.Get_Word_16 (Address_Type (SP));
             if Trace_Execution then
                Ada.Text_IO.Put
                  (" (" & Hex_Image (SP) & " "
-                  & Hex_Image (Machine.Rs (Rec.Src.Register))
+                  & Hex_Image (This.Rs (Rec.Src.Register))
                   & " -> " & Register_Image (Rec.Src.Register)
                   & ")");
             end if;
@@ -935,24 +1000,24 @@ package body Pdp11.Machine is
                Set : constant Boolean := Rec.Instruction = I_SCC;
             begin
                if Rec.N then
-                  Machine.N := Set;
+                  This.N := Set;
                end if;
                if Rec.Z then
-                  Machine.Z := Set;
+                  This.Z := Set;
                end if;
                if Rec.C then
-                  Machine.C := Set;
+                  This.C := Set;
                end if;
                if Rec.V then
-                  Machine.V := Set;
+                  This.V := Set;
                end if;
             end;
 
          when Floating_Point_F1 =>
-            Machine.Float_Format_1 (Rec.Instruction, Rec.FAC, Rec.F_Operand);
+            This.Float_Format_1 (Rec.Instruction, Rec.FAC, Rec.F_Operand);
 
          when Floating_Point_F2 =>
-            Machine.Float_Format_2 (Rec.Instruction, Rec.F_Operand);
+            This.Float_Format_2 (Rec.Instruction, Rec.F_Operand);
 
          when I_INVF =>
             declare
@@ -971,19 +1036,19 @@ package body Pdp11.Machine is
                end Update;
 
             begin
-               Machine.Update_Float_Operand_Value
+               This.Update_Float_Operand_Value
                  (Rec.F_Operand, Update'Access);
             end;
 
          when Vector_F1 =>
-            Machine.Vector_Format_1
+            This.Vector_Format_1
               (Rec.Instruction, Rec.VAC_1, Rec.V_Operand);
 
          when Vector_F2 =>
-            Machine.Vector_Format_2 (Rec.Instruction, Rec.VAC_1, Rec.VAC_2);
+            This.Vector_Format_2 (Rec.Instruction, Rec.VAC_1, Rec.VAC_2);
 
          when Vector_F3 =>
-            Machine.Vector_Format_3 (Rec.Instruction, Rec.VAC_1);
+            This.Vector_Format_3 (Rec.Instruction, Rec.VAC_1);
 
       end case;
 
@@ -991,7 +1056,7 @@ package body Pdp11.Machine is
          Ada.Text_IO.New_Line;
       end if;
 
-      Machine.Clock := Machine.Clock + Machine.Current_Timing;
+      This.Clock := This.Clock + This.Current_Timing;
 
    end Next;
 
@@ -1000,14 +1065,14 @@ package body Pdp11.Machine is
    ---------------------
 
    procedure Raise_Bus_Error
-     (Machine : Machine_Type'Class;
+     (This : Instance'Class;
       Address : Address_Type;
       Write   : Boolean)
    is
    begin
       raise Pdp11.Addressable.Bad_Address with
         "Bus error at PC "
-        & Hex_Image (Machine.Rs (7))
+        & Hex_Image (This.Rs (7))
         & " while "
         & (if Write then "writing" else "reading")
         & " location "
@@ -1019,7 +1084,7 @@ package body Pdp11.Machine is
    -----------------------------
 
    procedure Register_Double_Operand
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Op      : Pdp11.ISA.Register_Double_Operand_Instruction;
       Src     : Pdp11.ISA.Operand_Type;
       Dst     : Pdp11.ISA.Register_Index)
@@ -1029,15 +1094,15 @@ package body Pdp11.Machine is
    begin
       case Op is
          when I_MUL =>
-            T32 := Word_32 (Machine.Rs (Dst))
-              * Word_32 (Machine.Get_Operand_Value (Src, True));
-            Machine.Rs (Dst) := Word_16 (T32 mod 65536);
+            T32 := Word_32 (This.Rs (Dst))
+              * Word_32 (This.Get_Operand_Value (Src, True));
+            This.Rs (Dst) := Word_16 (T32 mod 65536);
             if Dst mod 2 = 0 then
-               Machine.Rs (Dst + 1) := Word_16 (T32 / 65536);
+               This.Rs (Dst + 1) := Word_16 (T32 / 65536);
             end if;
-            Machine.N := T32 >= 2 ** 31;
-            Machine.Z := T32 = 0;
-            Machine.C := T32 in 2 ** 15 .. 2 ** 32 - 2 ** 15;
+            This.N := T32 >= 2 ** 31;
+            This.Z := T32 = 0;
+            This.C := T32 in 2 ** 15 .. 2 ** 32 - 2 ** 15;
          when I_DIV =>
             null;
 
@@ -1057,18 +1122,18 @@ package body Pdp11.Machine is
    -- Report --
    ------------
 
-   procedure Report (Machine : Machine_Type'Class) is
+   procedure Report (This : Instance'Class) is
    begin
       Ada.Text_IO.Put_Line
         (" R0   R1   R2   R3   R4   R5   SP   PC  NZVC   Clock");
-      for R of Machine.Rs loop
+      for R of This.Rs loop
          Ada.Text_IO.Put (Hex_Image (R) & " ");
       end loop;
-      Ada.Text_IO.Put (if Machine.N then "N" else "-");
-      Ada.Text_IO.Put (if Machine.Z then "Z" else "-");
-      Ada.Text_IO.Put (if Machine.V then "V" else "-");
-      Ada.Text_IO.Put (if Machine.C then "C" else "-");
-      Ada.Text_IO.Put (Machine.Clock_Image);
+      Ada.Text_IO.Put (if This.N then "N" else "-");
+      Ada.Text_IO.Put (if This.Z then "Z" else "-");
+      Ada.Text_IO.Put (if This.V then "V" else "-");
+      Ada.Text_IO.Put (if This.C then "C" else "-");
+      Ada.Text_IO.Put (This.Clock_Image);
       Ada.Text_IO.New_Line;
    end Report;
 
@@ -1077,12 +1142,12 @@ package body Pdp11.Machine is
    ------------------
 
    overriding procedure Set_Float_32
-     (Machine : in out Machine_Type;
+     (This : in out Instance;
       Address : Address_Type;
       Value   : Float_32)
    is
    begin
-      Machine.Memory.Set_Float_32 (Address, Value);
+      This.Memory.Set_Float_32 (Address, Value);
    end Set_Float_32;
 
    -----------------------------
@@ -1090,7 +1155,7 @@ package body Pdp11.Machine is
    -----------------------------
 
    procedure Set_Float_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Value   : Float_32)
    is
@@ -1100,7 +1165,7 @@ package body Pdp11.Machine is
         and then not Operand.Deferred
       then
          if Operand.Register <= Register_Index (FP_Register_Index'Last) then
-            Machine.ACs (FP_Register_Index (Operand.Register)) := Value;
+            This.ACs (FP_Register_Index (Operand.Register)) := Value;
          else
             raise ISA_Error;
          end if;
@@ -1112,20 +1177,20 @@ package body Pdp11.Machine is
            Conversions.As_Word_32 (Value);
          Lo  : constant Word_16 := Word_16 (W32 mod 65536);
          Hi  : constant Word_16 := Word_16 (W32 / 65536);
-         A   : Address_Type := Machine.Get_Operand_Address (Operand, True);
+         A   : Address_Type := This.Get_Operand_Address (Operand, True);
       begin
 
-         Machine.Set_Word_16 (A, Lo);
+         This.Set_Word_16 (A, Lo);
 
          if Operand.Mode in Autodecrement_Mode | Autoincrement_Mode
            and then not Operand.Deferred
          then
-            A := Machine.Get_Operand_Address (Operand, True);
+            A := This.Get_Operand_Address (Operand, True);
          else
             A := A + 2;
          end if;
 
-         Machine.Set_Word_16 (A, Hi);
+         This.Set_Word_16 (A, Hi);
       end;
    end Set_Float_Operand_Value;
 
@@ -1134,17 +1199,17 @@ package body Pdp11.Machine is
    ------------
 
    procedure Set_NZ
-     (Machine  : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Word     : Boolean;
       Value    : Word_16)
    is
    begin
       if Word then
-         Machine.N := Value >= 2 ** 15;
-         Machine.Z := Value = 0;
+         This.N := Value >= 2 ** 15;
+         This.Z := Value = 0;
       else
-         Machine.N := Value mod 256 >= 128;
-         Machine.Z := Value mod 256 = 0;
+         This.N := Value mod 256 >= 128;
+         This.Z := Value mod 256 = 0;
       end if;
    end Set_NZ;
 
@@ -1153,7 +1218,7 @@ package body Pdp11.Machine is
    ------------
 
    procedure Set_PS
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Value   : Word_16)
    is
       It : Word_16 := Value;
@@ -1171,12 +1236,12 @@ package body Pdp11.Machine is
       end Set;
 
    begin
-      Set (Machine.C);
-      Set (Machine.V);
-      Set (Machine.Z);
-      Set (Machine.N);
-      Set (Machine.T);
-      Machine.Priority := Priority_Type (It mod 8);
+      Set (This.C);
+      Set (This.V);
+      Set (This.Z);
+      Set (This.N);
+      Set (This.T);
+      This.Priority := Priority_Type (It mod 8);
    end Set_PS;
 
    ------------------
@@ -1184,13 +1249,13 @@ package body Pdp11.Machine is
    ------------------
 
    procedure Set_Register
-     (Machine  : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Register : Machine_Register;
       Value    : Word_16)
    is
    begin
-      Machine.Rs (Register) := Value;
-      Machine.Started := True;
+      This.Rs (Register) := Value;
+      This.Started := True;
    end Set_Register;
 
    ------------
@@ -1198,7 +1263,7 @@ package body Pdp11.Machine is
    ------------
 
    procedure Set_VC
-     (Machine  : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Word     : Boolean;
       X, Y, Z  : Word_16)
    is
@@ -1210,8 +1275,8 @@ package body Pdp11.Machine is
       ZN : constant Boolean := Negative (Z);
 
    begin
-      Machine.V := XN = YN and then XN /= ZN;
-      Machine.C :=
+      This.V := XN = YN and then XN /= ZN;
+      This.C :=
         (if Word then (2 ** 16 - 1) - X > Y
          else (2 ** 8 - 1) - (X mod 256) > (Y mod 256));
    end Set_VC;
@@ -1221,7 +1286,7 @@ package body Pdp11.Machine is
    ------------------------------
 
    procedure Set_Vector_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Value   : Vector_96)
    is
@@ -1233,33 +1298,33 @@ package body Pdp11.Machine is
          if Operand.Register > Register_Index (V_Register_Index'Last) then
             raise ISA_Error;
          end if;
-         Machine.VRs (V_Register_Index (Operand.Register)) := Value;
+         This.VRs (V_Register_Index (Operand.Register)) := Value;
       else
          declare
             A  : Address_Type :=
-                   Machine.Get_Operand_Address (Operand, 4);
+                   This.Get_Operand_Address (Operand, 4);
          begin
-            Machine.Set_Float_32 (A, Value.X);
+            This.Set_Float_32 (A, Value.X);
 
             if Operand.Mode in Autodecrement_Mode | Autoincrement_Mode
               and then not Operand.Deferred
             then
-               A := Machine.Get_Operand_Address (Operand, 4);
+               A := This.Get_Operand_Address (Operand, 4);
             else
                A := A + 4;
             end if;
 
-            Machine.Set_Float_32 (A, Value.Y);
+            This.Set_Float_32 (A, Value.Y);
 
             if Operand.Mode in Autodecrement_Mode | Autoincrement_Mode
               and then not Operand.Deferred
             then
-               A := Machine.Get_Operand_Address (Operand, 4);
+               A := This.Get_Operand_Address (Operand, 4);
             else
                A := A + 4;
             end if;
 
-            Machine.Set_Float_32 (A, Value.Z);
+            This.Set_Float_32 (A, Value.Z);
 
          end;
       end if;
@@ -1270,12 +1335,12 @@ package body Pdp11.Machine is
    ----------------
 
    overriding procedure Set_Word_8
-     (Machine : in out Machine_Type;
+     (This : in out Instance;
       Address : Address_Type;
       Value   : Word_8)
    is
    begin
-      Machine.Memory.Set_Word_8 (Address, Value);
+      This.Memory.Set_Word_8 (Address, Value);
    end Set_Word_8;
 
    -----------------
@@ -1283,12 +1348,12 @@ package body Pdp11.Machine is
    -----------------
 
    overriding procedure Set_Word_16
-     (Machine : in out Machine_Type;
+     (This : in out Instance;
       Address : Address_Type;
       Value   : Word_16)
    is
    begin
-      Machine.Memory.Set_Word_16 (Address, Value);
+      This.Memory.Set_Word_16 (Address, Value);
    end Set_Word_16;
 
    --------------------
@@ -1296,7 +1361,7 @@ package body Pdp11.Machine is
    --------------------
 
    procedure Single_Operand
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Op      : Pdp11.ISA.Single_Operand_Instruction;
       Word    : Boolean;
       Dst     : Pdp11.ISA.Operand_Type)
@@ -1306,12 +1371,12 @@ package body Pdp11.Machine is
                    Dst_Operand_Timing (Op, Dst);
       Dst_Addr : constant Address_Type :=
                    (if Is_Register_Operand (Dst) then 0
-                    else Machine.Get_Operand_Address (Dst, Word));
+                    else This.Get_Operand_Address (Dst, Word));
 
       Y        : constant Word_16 :=
                    (if Is_Register_Operand (Dst)
-                    then Machine.Rs (Dst.Register)
-                    else Machine.Get_Word_16 (Dst_Addr));
+                    then This.Rs (Dst.Register)
+                    else This.Get_Word_16 (Dst_Addr));
 
       procedure Result
         (Z         : Word_16;
@@ -1343,16 +1408,16 @@ package body Pdp11.Machine is
 
          if Store then
             if Is_Register_Operand (Dst) then
-               Machine.Write_Register (Dst.Register, Word, Z);
+               This.Write_Register (Dst.Register, Word, Z);
             elsif Word then
-               Machine.Set_Word_16 (Dst_Addr, Z);
+               This.Set_Word_16 (Dst_Addr, Z);
             else
-               Machine.Set_Word_8 (Dst_Addr, Word_8 (Z mod 256));
+               This.Set_Word_8 (Dst_Addr, Word_8 (Z mod 256));
             end if;
          end if;
 
          if Set_Flags then
-            Machine.Set_NZ (Word, Z);
+            This.Set_NZ (Word, Z);
          end if;
 
       end Result;
@@ -1375,10 +1440,10 @@ package body Pdp11.Machine is
             Result ((not Y) + 1);
 
          when I_ADC =>
-            Result (Y + Boolean'Pos (Machine.C));
+            Result (Y + Boolean'Pos (This.C));
 
          when I_SBC =>
-            Result (Y - Boolean'Pos (Machine.C));
+            Result (Y - Boolean'Pos (This.C));
 
          when I_TST =>
             Result (Y, Store => False);
@@ -1386,24 +1451,24 @@ package body Pdp11.Machine is
          when I_ROR =>
             declare
                C : constant Word_16 :=
-                     (if Machine.C then
+                     (if This.C then
                         (if Word then 32768 else 128)
                       else 0);
             begin
                Result (C + Y / 2);
-               Machine.C := Y mod 2 = 1;
+               This.C := Y mod 2 = 1;
             end;
 
          when I_ROL =>
             declare
                C : constant Word_16 :=
-                     (if Machine.C then 1 else 0);
+                     (if This.C then 1 else 0);
             begin
                Result (C + Y * 2);
                if Word then
-                  Machine.C := Y >= 32768;
+                  This.C := Y >= 32768;
                else
-                  Machine.C := Y mod 256 >= 128;
+                  This.C := Y mod 256 >= 128;
                end if;
             end;
 
@@ -1417,7 +1482,7 @@ package body Pdp11.Machine is
             null;
 
          when I_MTPS =>
-            Machine.Set_PS (Y);
+            This.Set_PS (Y);
 
          when I_MFPI =>
             null;
@@ -1435,17 +1500,30 @@ package body Pdp11.Machine is
             null;
 
          when I_MFPS =>
-            Result (Machine.Get_PS, Set_Flags => False);
+            Result (This.Get_PS, Set_Flags => False);
       end case;
-      Machine.Current_Timing := Machine.Current_Timing + Timing;
+      This.Current_Timing := This.Current_Timing + Timing;
    end Single_Operand;
+
+   -----------
+   -- Start --
+   -----------
+
+   procedure Start
+     (This : in out Instance'Class)
+   is
+   begin
+      loop
+         This.Execute_Next_Instruction;
+      end loop;
+   end Start;
 
    --------------------------------
    -- Update_Float_Operand_Value --
    --------------------------------
 
    procedure Update_Float_Operand_Value
-     (Machine : in out Machine_Type'Class;
+     (This : in out Instance'Class;
       Operand : Pdp11.ISA.Operand_Type;
       Update  : not null access
         procedure (X : in out Float_32))
@@ -1455,21 +1533,21 @@ package body Pdp11.Machine is
       if Operand.Mode = Register_Mode
         and then not Operand.Deferred
       then
-         Update (Machine.ACs (FP_Register_Index (Operand.Register)));
+         Update (This.ACs (FP_Register_Index (Operand.Register)));
       else
          declare
             A : constant Address_Type :=
-                  Machine.Get_Operand_Address (Operand, True);
-            X : Float_32 := Machine.Get_Float_32 (A);
+                  This.Get_Operand_Address (Operand, True);
+            X : Float_32 := This.Get_Float_32 (A);
          begin
             Update (X);
-            Machine.Set_Float_32 (A, X);
+            This.Set_Float_32 (A, X);
             if (Operand.Mode = Autoincrement_Mode
                 or else Operand.Mode = Autodecrement_Mode)
               and then not Operand.Deferred
             then
-               Machine.Rs (Operand.Register) :=
-                 Machine.Rs (Operand.Register) + 2;
+               This.Rs (Operand.Register) :=
+                 This.Rs (Operand.Register) + 2;
             end if;
          end;
       end if;
@@ -1480,7 +1558,7 @@ package body Pdp11.Machine is
    ---------------------
 
    procedure Vector_Format_1
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Vector_F1;
       VAC         : ISA.V_Register_Index;
       Operand     : ISA.Operand_Type)
@@ -1489,11 +1567,11 @@ package body Pdp11.Machine is
    begin
       case Instruction is
          when I_LDV =>
-            Machine.VRs (VAC) :=
-              Machine.Get_Vector_Operand_Value (Operand);
+            This.VRs (VAC) :=
+              This.Get_Vector_Operand_Value (Operand);
          when I_STV =>
-            Machine.Set_Vector_Operand_Value
-              (Operand, Machine.VRs (VAC));
+            This.Set_Vector_Operand_Value
+              (Operand, This.VRs (VAC));
       end case;
    end Vector_Format_1;
 
@@ -1502,18 +1580,18 @@ package body Pdp11.Machine is
    ---------------------
 
    procedure Vector_Format_2
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Vector_F2;
       VAC_1       : ISA.V_Register_Index;
       VAC_2       : ISA.V_Register_Index)
    is
       use ISA;
-      Src : constant Vector_96 := Machine.VRs (VAC_1);
-      Dst : Vector_96 renames Machine.VRs (VAC_2);
+      Src : constant Vector_96 := This.VRs (VAC_1);
+      Dst : Vector_96 renames This.VRs (VAC_2);
       Src_F : constant Float_32 :=
-                Machine.ACs (FP_Register_Index (VAC_1));
+                This.ACs (FP_Register_Index (VAC_1));
       Dst_F : Float_32 renames
-                Machine.ACs (FP_Register_Index (VAC_2));
+                This.ACs (FP_Register_Index (VAC_2));
    begin
       case Instruction is
          when I_ADDV =>
@@ -1539,12 +1617,12 @@ package body Pdp11.Machine is
    ---------------------
 
    procedure Vector_Format_3
-     (Machine     : in out Machine_Type'Class;
+     (This     : in out Instance'Class;
       Instruction : ISA.Vector_F3;
       VAC         : ISA.V_Register_Index)
    is
       use ISA;
-      Dst   : Vector_96 renames Machine.VRs (VAC);
+      Dst   : Vector_96 renames This.VRs (VAC);
    begin
       case Instruction is
          when I_CLRV =>
@@ -1566,16 +1644,16 @@ package body Pdp11.Machine is
    --------------------
 
    procedure Write_Register
-     (Machine  : in out Machine_Type'Class;
+     (This    : in out Instance'Class;
       Register : Pdp11.ISA.Register_Index;
       Word     : Boolean;
       Value    : Word_16)
    is
    begin
       if Word then
-         Machine.Rs (Register) := Value;
+         This.Rs (Register) := Value;
       else
-         Machine.Rs (Register) :=
+         This.Rs (Register) :=
            (if Value mod 256 >= 128
             then 255 * 256
             else 0)

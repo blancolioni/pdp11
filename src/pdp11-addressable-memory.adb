@@ -6,62 +6,60 @@ with Pdp11.Options;
 package body Pdp11.Addressable.Memory is
 
    ----------------
-   -- Add_Driver --
+   -- Add_Device --
    ----------------
 
-   procedure Add_Driver
+   procedure Add_Device
      (This     : not null access Root_Memory_Type'Class;
-      Driver   : not null access Pdp11.Drivers.Root_Driver_Type'Class;
-      Base     : Address_Type)
+      Device   : not null access Pdp11.Devices.Instance'Class)
    is
-      use type Pdp11.Drivers.Pdp11_Driver;
-      Index : Driver_Index := 1;
-      Bound : constant Address_Type := Base + Driver.Bound;
+      use type Pdp11.Devices.Reference;
+      Index : Device_Index := 1;
    begin
-      while This.Installed_Drivers (Index).Driver /= null loop
-         if Index = Driver_Index'Last then
+      while This.Installed_Devices (Index).Device /= null loop
+         if Index = Device_Index'Last then
             raise Constraint_Error with
-              "too many drivers";
+              "too many devices";
          end if;
          Index := Index + 1;
       end loop;
 
       if not Pdp11.Options.Quiet then
          Ada.Text_IO.Put_Line
-           ("Device" & Index'Image & ": " & Driver.Name & " at "
-            & Pdp11.Images.Hex_Image (Word_16 (Base))
+           ("Device" & Index'Image & ": " & Device.Name & " at "
+            & Pdp11.Images.Hex_Image (Word_16 (Device.Base))
             & "-"
-            & Images.Hex_Image (Word_16 (Base + Driver.Bound - 1)));
+            & Images.Hex_Image (Word_16 (Device.Bound)));
       end if;
 
-      This.Installed_Drivers (Index) :=
-        Driver_Record'
-          (Base   => Base,
-           Driver => Pdp11.Drivers.Pdp11_Driver (Driver));
+      This.Installed_Devices (Index) :=
+        Device_Record'
+          (Base   => Device.Base,
+           Device => Pdp11.Devices.Reference (Device));
 
-      for Addr in Base .. Bound - 1 loop
-         This.Driver_Map (Addr) := Index;
+      for Addr in Device.Base .. Device.Bound loop
+         This.Device_Map (Addr) := Index;
       end loop;
 
-      --  Driver.Install_Driver
+      --  Device.Install_Device
       --    (Handler            => This,
       --     Interrupt_Priority => Priority,
       --     Interrupt_Vector   => Vector);
 
-   end Add_Driver;
+   end Add_Device;
 
    -------------------
-   -- Clear_Drivers --
+   -- Clear_Devices --
    -------------------
 
-   procedure Clear_Drivers
+   procedure Clear_Devices
      (This : in out Root_Memory_Type'Class)
    is
    begin
-      This.Installed_Drivers :=
+      This.Installed_Devices :=
         (others => (0, null));
-      This.Driver_Map := (others => 0);
-   end Clear_Drivers;
+      This.Device_Map := (others => 0);
+   end Clear_Devices;
 
    ------------
    -- Create --
@@ -83,18 +81,18 @@ package body Pdp11.Addressable.Memory is
       Address : Address_Type)
       return Float_32
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Memory.Driver_Map (Address);
+      use Pdp11.Devices;
+      Index  : constant Device_Index :=
+                 Memory.Device_Map (Address);
       Base   : constant Address_Type :=
-                 Memory.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Memory.Installed_Drivers (Index).Driver;
+                 Memory.Installed_Devices (Index).Base;
+      Device : constant Reference :=
+                 Memory.Installed_Devices (Index).Device;
    begin
-      if Driver = null then
+      if Device = null then
          raise Bad_Address;
       else
-         return Driver.Get_Float_32 (Address - Base);
+         return Device.Get_Float_32 (Address - Base);
       end if;
    end Get_Float_32;
 
@@ -107,18 +105,18 @@ package body Pdp11.Addressable.Memory is
       Address : Address_Type)
       return Word_8
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Memory.Driver_Map (Address);
+      use Pdp11.Devices;
+      Index  : constant Device_Index :=
+                 Memory.Device_Map (Address);
       Base   : constant Address_Type :=
-                 Memory.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Memory.Installed_Drivers (Index).Driver;
+                 Memory.Installed_Devices (Index).Base;
+      Device : constant Reference :=
+                 Memory.Installed_Devices (Index).Device;
    begin
-      if Driver = null then
+      if Device = null then
          raise Bad_Address;
       else
-         return Driver.Get_Word_8 (Address - Base);
+         return Device.Get_Word_8 (Address - Base);
       end if;
    end Get_Word_8;
 
@@ -131,18 +129,18 @@ package body Pdp11.Addressable.Memory is
       Address : Address_Type)
       return Word_16
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Memory.Driver_Map (Address);
+      use Pdp11.Devices;
+      Index  : constant Device_Index :=
+                 Memory.Device_Map (Address);
       Base   : constant Address_Type :=
-                 Memory.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Memory.Installed_Drivers (Index).Driver;
+                 Memory.Installed_Devices (Index).Base;
+      Device : constant Reference :=
+                 Memory.Installed_Devices (Index).Device;
    begin
-      if Driver = null then
+      if Device = null then
          raise Bad_Address;
       else
-         return Driver.Get_Word_16 (Address - Base);
+         return Device.Get_Word_16 (Address - Base);
       end if;
    end Get_Word_16;
 
@@ -155,16 +153,16 @@ package body Pdp11.Addressable.Memory is
       Address : Address_Type;
       Value   : Float_32)
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Memory.Driver_Map (Address);
+      use Pdp11.Devices;
+      Index  : constant Device_Index :=
+                 Memory.Device_Map (Address);
       Base   : constant Address_Type :=
-                 Memory.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Memory.Installed_Drivers (Index).Driver;
+                 Memory.Installed_Devices (Index).Base;
+      Device : constant Reference :=
+                 Memory.Installed_Devices (Index).Device;
    begin
-      if Driver /= null then
-         Driver.Set_Float_32 (Address - Base, Value);
+      if Device /= null then
+         Device.Set_Float_32 (Address - Base, Value);
       else
          raise Bad_Address;
       end if;
@@ -179,16 +177,16 @@ package body Pdp11.Addressable.Memory is
       Address : Address_Type;
       Value   : Word_8)
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Memory.Driver_Map (Address);
+      use Pdp11.Devices;
+      Index  : constant Device_Index :=
+                 Memory.Device_Map (Address);
       Base   : constant Address_Type :=
-                 Memory.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Memory.Installed_Drivers (Index).Driver;
+                 Memory.Installed_Devices (Index).Base;
+      Device : constant Reference :=
+                 Memory.Installed_Devices (Index).Device;
    begin
-      if Driver /= null then
-         Driver.Set_Word_8 (Address - Base, Value);
+      if Device /= null then
+         Device.Set_Word_8 (Address - Base, Value);
       else
          raise Bad_Address;
       end if;
@@ -203,16 +201,16 @@ package body Pdp11.Addressable.Memory is
       Address : Address_Type;
       Value   : Word_16)
    is
-      use Pdp11.Drivers;
-      Index  : constant Driver_Index :=
-                 Memory.Driver_Map (Address);
+      use Pdp11.Devices;
+      Index  : constant Device_Index :=
+                 Memory.Device_Map (Address);
       Base   : constant Address_Type :=
-                 Memory.Installed_Drivers (Index).Base;
-      Driver : constant Pdp11_Driver :=
-                 Memory.Installed_Drivers (Index).Driver;
+                 Memory.Installed_Devices (Index).Base;
+      Device : constant Reference :=
+                 Memory.Installed_Devices (Index).Device;
    begin
-      if Driver /= null then
-         Driver.Set_Word_16 (Address - Base, Value);
+      if Device /= null then
+         Device.Set_Word_16 (Address - Base, Value);
       else
          raise Bad_Address with "bad address: "
            & Pdp11.Images.Hex_Image (Word_16 (Address));
