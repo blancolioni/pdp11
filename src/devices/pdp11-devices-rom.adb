@@ -1,64 +1,51 @@
-with Ada.Containers.Indefinite_Holders;
-with Ada.Directories;
-with Ada.Strings.Unbounded;
-
 with WL.Binary_IO;
 
-package body Pdp11.Drivers.ROM is
+package body Pdp11.Devices.ROM is
 
-   type ROM_Array is array (Address_Type range <>) of Word_8;
+   subtype Parent is Pdp11.Devices.Instance;
 
-   package ROM_Holders is
-     new Ada.Containers.Indefinite_Holders (ROM_Array);
+   type Word_8_Array is array (Address_Type range <>) of Word_8;
 
-   type ROM_Driver is
-     new Root_Driver_Type with
+   type Instance (Last : Address_Type) is new Parent with
       record
-         Memory : ROM_Holders.Holder;
-         Name   : Ada.Strings.Unbounded.Unbounded_String;
+         M : Word_8_Array (0 .. Last);
+
       end record;
 
-   overriding function Bound
-     (Driver : ROM_Driver)
-      return Address_Type
-   is (Driver.Memory.Element'Last + 1);
+   overriding function Name (This : Instance) return String
+   is ("ROM");
 
-   overriding function Name
-     (Driver : ROM_Driver)
-      return String
-   is (Ada.Strings.Unbounded.To_String (Driver.Name));
+   overriding procedure Tick
+     (This    : in out Instance;
+      Elapsed : ISA.Microsecond_Duration;
+      Handler : not null access Interrupt_Handler'Class)
+   is null;
 
    overriding function Get_Word_8
-     (Driver : ROM_Driver;
+     (This    : Instance;
       Address : Address_Type)
       return Word_8
-   is (Driver.Memory.Element (Address));
+   is (This.M (Address));
 
    overriding procedure Set_Word_8
-     (Driver  : in out ROM_Driver;
+     (This    : in out Instance;
       Address : Address_Type;
-      Value   : Word_8);
+      Value   : Word_8)
+   is null;
 
-   -----------------------
-   -- Create_ROM_Driver --
-   -----------------------
-
-   function Create_ROM_Driver
-     (Object_Path : String) return Pdp11.Drivers.Pdp11_Driver
+   function Create
+     (Base : Address_Type;
+      Path : String)
+      return Reference
    is
       use WL.Binary_IO;
       File : File_Type;
-      Driver : ROM_Driver;
    begin
 
-      Driver.Name :=
-        Ada.Strings.Unbounded.To_Unbounded_String
-          (Ada.Directories.Simple_Name (Object_Path));
-
-      Open (File, In_File, Object_Path);
+      Open (File, In_File, Path);
 
       declare
-         Memory : ROM_Array (0 .. Address_Type (Length (File)) - 1);
+         Memory : Word_8_Array (0 .. Address_Type (Length (File)) - 1);
       begin
          for B of Memory loop
             declare
@@ -69,25 +56,18 @@ package body Pdp11.Drivers.ROM is
             end;
          end loop;
 
-         Driver.Memory := ROM_Holders.To_Holder (Memory);
          Close (File);
 
-         return new ROM_Driver'(Driver);
+         return new Instance'
+           (Pdp11.Devices.Parent with
+            Priority => <>,
+            Vector   => <>,
+            Base     => Base + Memory'First,
+            Bound    => Base + Memory'Last,
+            Last     => Memory'Last,
+            M        => Memory);
       end;
 
-   end Create_ROM_Driver;
+   end Create;
 
-   ----------------
-   -- Set_Word_8 --
-   ----------------
-
-   overriding procedure Set_Word_8
-     (Driver  : in out ROM_Driver;
-      Address : Address_Type;
-      Value   : Word_8)
-   is
-   begin
-      Driver.Memory.Reference.Element (Address) := Value;
-   end Set_Word_8;
-
-end Pdp11.Drivers.ROM;
+end Pdp11.Devices.ROM;

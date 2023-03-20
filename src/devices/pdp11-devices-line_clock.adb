@@ -24,11 +24,11 @@ package body Pdp11.Devices.Line_Clock is
       Elapsed : ISA.Microsecond_Duration;
       Handler : not null access Interrupt_Handler'Class);
 
-   ---------
-   -- Get --
-   ---------
+   ------------
+   -- Create --
+   ------------
 
-   function Get return Reference is
+   function Create return Reference is
    begin
       return new Instance'
         (Pdp11.Devices.Parent with
@@ -39,7 +39,7 @@ package body Pdp11.Devices.Line_Clock is
            Last_Interrupt => <>,
            Frequency      => <>,
            Elapsed        => <>);
-   end Get;
+   end Create;
 
    ----------
    -- Tick --

@@ -13,7 +13,7 @@ with Pdp11.Addressable.Memory;
 with Pdp11.Devices.Line_Clock;
 with Pdp11.Devices.RAM;
 with Pdp11.Devices.ROM;
---  with Pdp11.Devices.TTY;
+with Pdp11.Devices.TTY;
 
 with Pdp11.Options;
 with Pdp11.Paths;
@@ -63,7 +63,8 @@ begin
                 := (Pdp11.Devices.Line_Clock.Create,
                     Pdp11.Devices.RAM.Create (0, 255),
                     Pdp11.Devices.RAM.Create (4096, 4095),
-                    Pdp11.Devices.ROM.Create (Base_Address, Output));
+                    Pdp11.Devices.ROM.Create (Base_Address, Output),
+                    Pdp11.Devices.TTY.Create);
 
          begin
 

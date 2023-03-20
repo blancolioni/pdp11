@@ -1,63 +1,71 @@
 with Ada.Text_IO;
 
-package body Pdp11.Drivers.TTY is
+package body Pdp11.Devices.TTY is
 
-   type TTY_Driver_Record is
-     new Root_Driver_Type with
+   subtype Parent is Pdp11.Devices.Instance;
+
+   type Instance is new Parent with
       record
          Ch : Character := ' ';
       end record;
 
-   overriding function Bound
-     (Driver : TTY_Driver_Record)
-      return Address_Type
-   is (2);
+   overriding function Name (This : Instance) return String
+   is ("TTY");
 
-   overriding function Name
-     (Driver : TTY_Driver_Record)
-      return String
-   is ("tty");
+   overriding procedure Tick
+     (This    : in out Instance;
+      Elapsed : ISA.Microsecond_Duration;
+      Handler : not null access Interrupt_Handler'Class)
+   is null;
 
    overriding function Get_Word_8
-     (Driver  : TTY_Driver_Record;
+     (This    : Instance;
       Address : Address_Type)
       return Word_8
    is (if Address = 0 then 0
-       elsif Address = 1 then Character'Pos (Driver.Ch)
+       elsif Address = 1 then Character'Pos (This.Ch)
        else 255);
 
    overriding procedure Set_Word_8
-     (Driver  : in out TTY_Driver_Record;
+     (This    : in out Instance;
       Address : Address_Type;
       Value   : Word_8);
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+      return Reference
+   is
+   begin
+      return new Instance'
+        (Pdp11.Devices.Parent with
+           Priority => 4,
+           Vector   => 8#040#,
+           Base     => 16#FF80#,
+           Bound    => 16#FF81#,
+           Ch       => <>);
+   end Create;
 
    ----------------
    -- Set_Word_8 --
    ----------------
 
    overriding procedure Set_Word_8
-     (Driver  : in out TTY_Driver_Record;
+     (This    : in out Instance;
       Address : Address_Type;
       Value   : Word_8)
    is
    begin
       if Address = 0 then
          if Value /= 0 then
-            Ada.Text_IO.Put (Driver.Ch);
+            Ada.Text_IO.Put (This.Ch);
             Ada.Text_IO.Flush;
          end if;
       elsif Address = 1 then
-         Driver.Ch := Character'Val (Value);
+         This.Ch := Character'Val (Value);
       end if;
    end Set_Word_8;
 
-   ----------------
-   -- TTY_Driver --
-   ----------------
-
-   function TTY_Driver return Pdp11.Drivers.Pdp11_Driver is
-   begin
-      return new TTY_Driver_Record;
-   end TTY_Driver;
-
-end Pdp11.Drivers.TTY;
+end Pdp11.Devices.TTY;

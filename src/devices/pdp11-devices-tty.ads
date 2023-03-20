@@ -1,5 +1,5 @@
-package Pdp11.Drivers.TTY is
+package Pdp11.Devices.TTY is
 
-   function TTY_Driver return Pdp11.Drivers.Pdp11_Driver;
+   function Create return Reference;
 
-end Pdp11.Drivers.TTY;
+end Pdp11.Devices.TTY;
