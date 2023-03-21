@@ -380,6 +380,8 @@ package body Pdp11.Assembler.Parser is
       Operand ("asl", I_ASL, True);
       Operand ("aslb", I_ASL, False);
 
+      Operand ("mtps", I_MTPS, False);
+
       Branch ("br", I_BR);
       Branch ("bne", I_BNE);
       Branch ("beq", I_BEQ);

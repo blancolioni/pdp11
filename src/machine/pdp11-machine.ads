@@ -96,6 +96,7 @@ private
                                  (others => (others => 0.0));
          Devices             : Device_Lists.List;
          Started             : Boolean := False;
+         Waiting             : Boolean := False;
          Priority            : Priority_Type := 7;
          T, N, Z, V, C       : Boolean := False;
          Clock               : ISA.Microsecond_Duration := 0.0;

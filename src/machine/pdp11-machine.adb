@@ -237,7 +237,7 @@ package body Pdp11.Machine is
 
    function Clock_Image (This : Instance'Class) return String is
       It : Natural := Natural (This.Clock * 100.0);
-      Img : String := "         ";
+      Img : String := "            ";
       Dec : Integer := 2;
    begin
       for Ch of reverse Img loop
@@ -404,7 +404,7 @@ package body Pdp11.Machine is
          This.Next;
 
          declare
-            Finish : constant Microsecond_Duration := This.Clock;
+            Finish  : constant Microsecond_Duration := This.Clock;
             Elapsed : constant Microsecond_Duration := Finish - Start;
          begin
             for Device of This.Devices loop
@@ -412,6 +412,13 @@ package body Pdp11.Machine is
             end loop;
          end;
       end;
+
+      while This.Waiting loop
+         This.Clock := This.Clock + 1.0;
+         for Device of This.Devices loop
+            Device.Tick (1.0, This'Unchecked_Access);
+         end loop;
+      end loop;
 
    end Execute_Next_Instruction;
 
@@ -888,15 +895,16 @@ package body Pdp11.Machine is
 
    begin
       if Priority > This.Priority then
-         Ada.Text_IO.Put_Line
-           ("interrupt: priority" & Priority'Image
-            & ", vector " & Pdp11.Images.Hex_Image (Word_16 (Vector)));
+         --  Ada.Text_IO.Put_Line
+         --    ("interrupt: priority" & Priority'Image
+         --     & ", vector " & Pdp11.Images.Hex_Image (Word_16 (Vector)));
          Push (This.Get_PS);
          Push (This.Rs (7));
          This.Rs (7) := This.Get_Word_16 (Vector);
          This.Set_PS (This.Get_Word_16 (Vector + 2));
          This.Current_Timing :=
            Pdp11.ISA."+" (This.Current_Timing, 7.2);
+         This.Waiting := False;
       end if;
    end Interrupt;
 
@@ -1013,10 +1021,8 @@ package body Pdp11.Machine is
             raise Halted with "halted at " & Hex_Image (PC);
 
          when I_WAIT =>
-            Ada.Text_IO.Put_Line ("waiting for interrupt ...");
-            loop
-               null;
-            end loop;
+            --  Ada.Text_IO.Put_Line ("waiting for interrupt ...");
+            This.Waiting := True;
 
          when I_RTI =>
             PC := This.Get_Word_16 (Address_Type (SP));
@@ -1551,6 +1557,7 @@ package body Pdp11.Machine is
      (This : in out Instance'Class)
    is
    begin
+      Trace_Execution := Pdp11.Options.Trace;
       loop
          This.Execute_Next_Instruction;
       end loop;

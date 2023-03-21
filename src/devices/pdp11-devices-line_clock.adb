@@ -13,6 +13,8 @@ package body Pdp11.Devices.Line_Clock is
       record
          Last_Interrupt : Pdp11.ISA.Microsecond_Duration := 0.0;
          Frequency      : Pdp11.ISA.Microsecond_Duration := 50.0;
+         Cycle          : Pdp11.ISA.Microsecond_Duration :=
+                            1_000_000.0 / 50.0;
          Elapsed        : Pdp11.ISA.Microsecond_Duration := 0.0;
       end record;
 
@@ -38,6 +40,7 @@ package body Pdp11.Devices.Line_Clock is
            Bound    => Bound_Address,
            Last_Interrupt => <>,
            Frequency      => <>,
+           Cycle          => <>,
            Elapsed        => <>);
    end Create;
 
@@ -53,9 +56,9 @@ package body Pdp11.Devices.Line_Clock is
       use Pdp11.ISA;
    begin
       This.Elapsed := This.Elapsed + Elapsed;
-      if This.Elapsed >= This.Frequency then
+      if This.Elapsed >= This.Cycle then
          Handler.Interrupt (Interrupt_Priority, Interrupt_Vector);
-         This.Elapsed := This.Elapsed - This.Frequency;
+         This.Elapsed := This.Elapsed - This.Cycle;
       end if;
    end Tick;
 

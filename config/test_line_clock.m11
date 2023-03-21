@@ -7,7 +7,13 @@ mov pc, r0
 add #vector, r0
 mov r0, @#line_clock_vector
 mov #0, @#tick_count
-wait
+mtps #0
+1: wait
+   mov @#4096, r0
+   cmp r0, #100
+   bne 1
+   halt
 
-vector: inc @#tick_count
+vector: halt
+        inc @#tick_count
         rti
