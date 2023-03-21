@@ -49,9 +49,15 @@ begin
                        Address_Type (Pdp11.Options.Base_Address);
    begin
       if Source /= "" then
+         if not Pdp11.Options.Quiet then
+            Ada.Text_IO.Put_Line ("loading: " & Source);
+         end if;
          Assembly.Load (Source);
          Assembly.Link;
          Assembly.Save (Output);
+         if not Pdp11.Options.Quiet then
+            Ada.Text_IO.Put_Line ("output: " & Output);
+         end if;
       end if;
 
       if Output /= "" and then Pdp11.Options.Execute then
@@ -62,7 +68,7 @@ begin
               of Pdp11.Devices.Reference
                 := (Pdp11.Devices.Line_Clock.Create,
                     Pdp11.Devices.RAM.Create (0, 255),
-                    Pdp11.Devices.RAM.Create (4096, 4095),
+                    Pdp11.Devices.RAM.Create (16#1000#, 16#1FFF#),
                     Pdp11.Devices.ROM.Create (Base_Address, Output),
                     Pdp11.Devices.TTY.Create);
 

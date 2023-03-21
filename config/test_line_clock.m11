@@ -1,0 +1,13 @@
+line_clock_vector = 8#0100#
+line_clock_psw    = 8#0104#
+
+tick_count = 4096
+
+mov pc, r0
+add #vector, r0
+mov r0, @#line_clock_vector
+mov #0, @#tick_count
+wait
+
+vector: inc @#tick_count
+        rti

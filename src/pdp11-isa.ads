@@ -53,6 +53,8 @@ package Pdp11.ISA is
       I_BPL, I_BHI, I_BVC, I_BCC,
       I_JMP, I_JSR, I_RTS,
       I_CCC, I_SCC,
+      I_HALT, I_RTI, I_IOT, I_WAIT, I_RESET,
+      I_EMT, I_TRAP,
       I_MULF, I_MODF, I_ADDF, I_LDF, I_SUBF, I_CMPF, I_STF, I_DIVF,
       I_CLRF, I_TSTF, I_ABSF, I_NEGF, I_INVF,
       I_LDV, I_STV,
@@ -79,6 +81,9 @@ package Pdp11.ISA is
 
    subtype Branch_Instruction is
      Instruction_Type range I_BR .. I_BCC;
+
+   subtype Miscellaneous_Instruction is
+     Instruction_Type range I_HALT .. I_TRAP;
 
    subtype Floating_Point_Instruction is
      Instruction_Type range I_MULF .. I_NEGF;

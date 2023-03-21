@@ -222,6 +222,10 @@ package body Pdp11.Assembler.Parser is
         (Name        : String;
          Instruction : Instruction_Type);
 
+      procedure Single_Word
+        (Name        : String;
+         Instruction : Instruction_Type);
+
       ------------
       -- Branch --
       ------------
@@ -293,6 +297,22 @@ package body Pdp11.Assembler.Parser is
                Word        => Word,
                others      => <>));
       end Operand;
+
+      -----------------
+      -- Single_Word --
+      -----------------
+
+      procedure Single_Word
+        (Name        : String;
+         Instruction : Instruction_Type)
+      is
+      begin
+         Name_Table.Insert
+           (Name,
+            Instruction_Record'
+              (Instruction => Instruction,
+               others      => <>));
+      end Single_Word;
 
       ------------
       -- Vector --
@@ -390,6 +410,12 @@ package body Pdp11.Assembler.Parser is
 
       Flags ("scc", True, True, True, True, True);
       Flags ("ccc", False, True, True, True, True);
+
+      Single_Word ("halt", I_HALT);
+      Single_Word ("rti", I_RTI);
+      Single_Word ("iot", I_IOT);
+      Single_Word ("wait", I_WAIT);
+      Single_Word ("reset", I_RESET);
 
       Name_Table.Insert
         ("jmp",

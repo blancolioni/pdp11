@@ -156,6 +156,29 @@ package body Pdp11.ISA is
                                                 I_MTPS, 0, 1);
          end if;
          Rec.Dst := Operand (IR, 0);
+      elsif IR < 8 then
+         declare
+            type Single_Word_Opcode is range 0 .. 7;
+         begin
+            case Single_Word_Opcode (IR) is
+               when 0 =>
+                  Rec.Instruction := I_HALT;
+               when 1 =>
+                  Rec.Instruction := I_WAIT;
+               when 2 =>
+                  Rec.Instruction := I_RTI;
+               when 3 =>
+                  Rec.Undefined := True;
+               when 4 =>
+                  Rec.Instruction := I_IOT;
+               when 5 =>
+                  Rec.Instruction := I_RESET;
+               when 6 =>
+                  Rec.Undefined := True;
+               when 7 =>
+                  Rec.Undefined := True;
+            end case;
+         end;
       elsif IR in 8#077000# .. 8#077777# then
          Rec.Instruction := I_SOB;
          Rec.Src.Register := Register_Index (Bits (IR, 6, 8));
@@ -368,6 +391,28 @@ package body Pdp11.ISA is
               + Boolean'Pos (Rec.Z) * 4
               + Boolean'Pos (Rec.V) * 2
               + Boolean'Pos (Rec.C);
+
+         when I_HALT =>
+            return 8#000000#;
+
+         when I_WAIT =>
+            return 8#000001#;
+
+         when I_RTI =>
+            return 8#000002#;
+
+         when I_IOT =>
+            return 8#000004#;
+
+         when I_RESET =>
+            return 8#000005#;
+
+         when I_EMT =>
+            return 8#104000# + Word_16 (Rec.Offset);
+
+         when I_TRAP =>
+            return 8#104400# + Word_16 (Rec.Offset);
+
          when Floating_Point_F1 =>
             return 8#171000#
             + (Instruction_Type'Pos (Rec.Instruction)

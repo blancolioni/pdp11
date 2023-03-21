@@ -929,10 +929,6 @@ package body Pdp11.Machine is
       This.Current_Timing :=
         ISA.Basic_Timing (Rec.Instruction);
 
-      if IR = 0 then
-         raise Halted with "halted at " & Hex_Image (PC);
-      end if;
-
       case Rec.Instruction is
          when Double_Operand_Instruction =>
             This.Double_Operand
@@ -1012,6 +1008,48 @@ package body Pdp11.Machine is
                   This.V := Set;
                end if;
             end;
+
+         when I_HALT =>
+            raise Halted with "halted at " & Hex_Image (PC);
+
+         when I_WAIT =>
+            Ada.Text_IO.Put_Line ("waiting for interrupt ...");
+            loop
+               null;
+            end loop;
+
+         when I_RTI =>
+            PC := This.Get_Word_16 (Address_Type (SP));
+            SP := SP + 2;
+            This.Set_PS (This.Get_Word_16 (Address_Type (SP)));
+            SP := SP + 2;
+
+         when I_IOT =>
+            SP := SP - 2;
+            This.Set_Word_16 (Address_Type (SP), This.Get_PS);
+            SP := SP - 2;
+            This.Set_Word_16 (Address_Type (SP), PC);
+            PC := This.Get_Word_16 (8#20#);
+            This.Set_PS (This.Get_Word_16 (8#22#));
+
+         when I_RESET =>
+            null;
+
+         when I_EMT =>
+            SP := SP - 2;
+            This.Set_Word_16 (Address_Type (SP), This.Get_PS);
+            SP := SP - 2;
+            This.Set_Word_16 (Address_Type (SP), PC);
+            PC := This.Get_Word_16 (8#30#);
+            This.Set_PS (This.Get_Word_16 (8#32#));
+
+         when I_TRAP =>
+            SP := SP - 2;
+            This.Set_Word_16 (Address_Type (SP), This.Get_PS);
+            SP := SP - 2;
+            This.Set_Word_16 (Address_Type (SP), PC);
+            PC := This.Get_Word_16 (8#34#);
+            This.Set_PS (This.Get_Word_16 (8#36#));
 
          when Floating_Point_F1 =>
             This.Float_Format_1 (Rec.Instruction, Rec.FAC, Rec.F_Operand);

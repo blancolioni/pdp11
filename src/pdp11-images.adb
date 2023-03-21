@@ -64,6 +64,10 @@ package body Pdp11.Images is
             return Mnemonic;
          when I_CCC | I_SCC =>
             return Mnemonic;
+         when I_HALT | I_RTI | I_IOT | I_WAIT | I_RESET =>
+            return Mnemonic;
+         when I_EMT | I_TRAP =>
+            return Mnemonic & Rec.Offset'Image;
          when Floating_Point_F1 =>
             return Mnemonic;
          when Floating_Point_F2 =>
