@@ -14,6 +14,13 @@ mtps #0
    mov @#4096, r0
    cmp r0, #200
    bne 1
+   mov #0, @#tick_count
+   mov #0, @#line_clock_ctrl
+2: bit #128, @#line_clock_ctrl
+   beq 2
+   inc @#tick_count
+   cmp @#tick_count, #200
+   bne 2
    halt
 
 vector: halt
