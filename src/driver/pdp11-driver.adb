@@ -12,6 +12,7 @@ with Pdp11.Addressable.Memory;
 
 with Pdp11.Devices.Line_Clock;
 with Pdp11.Devices.RAM;
+with Pdp11.Devices.RC11;
 with Pdp11.Devices.ROM;
 with Pdp11.Devices.TTY;
 
@@ -70,6 +71,7 @@ begin
                     Pdp11.Devices.RAM.Create (0, 255),
                     Pdp11.Devices.RAM.Create (16#1000#, 16#1FFF#),
                     Pdp11.Devices.ROM.Create (Base_Address, Output),
+                    Pdp11.Devices.RC11.Create,
                     Pdp11.Devices.TTY.Create);
 
          begin
