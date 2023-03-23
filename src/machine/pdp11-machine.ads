@@ -112,20 +112,20 @@ private
      (This     : in out Instance;
       Device   : not null access Pdp11.Devices.Instance'Class);
 
-   overriding function Get_Word_16
-     (This    : Instance;
-      Address : Address_Type)
-      return Word_16;
+   overriding procedure Get_Word_16
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_16);
 
-   overriding function Get_Word_8
-     (This    : Instance;
-      Address : Address_Type)
-      return Word_8;
+   overriding procedure Get_Word_8
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_8);
 
-   overriding function Get_Float_32
-     (This    : Instance;
-      Address : Address_Type)
-      return Float_32;
+   overriding procedure Get_Float_32
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Float_32);
 
    overriding procedure Set_Word_16
      (This    : in out Instance;

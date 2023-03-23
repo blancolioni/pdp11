@@ -41,20 +41,20 @@ private
          Device_Map          : Device_Address_Map := (others => 0);
       end record;
 
-   overriding function Get_Word_16
-     (Memory  : Root_Memory_Type;
-      Address : Address_Type)
-      return Word_16;
+   overriding procedure Get_Word_16
+     (Memory  : in out Root_Memory_Type;
+      Address : Address_Type;
+      Value   : out Word_16);
 
-   overriding function Get_Word_8
-     (Memory  : Root_Memory_Type;
-      Address : Address_Type)
-      return Word_8;
+   overriding procedure Get_Word_8
+     (Memory  : in out Root_Memory_Type;
+      Address : Address_Type;
+      Value   : out Word_8);
 
-   overriding function Get_Float_32
-     (Memory  : Root_Memory_Type;
-      Address : Address_Type)
-      return Float_32;
+   overriding procedure Get_Float_32
+     (Memory  : in out Root_Memory_Type;
+      Address : Address_Type;
+      Value   : out Float_32);
 
    overriding procedure Set_Word_16
      (Memory  : in out Root_Memory_Type;

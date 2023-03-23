@@ -48,10 +48,10 @@ package body Pdp11.Devices.TTY is
       Elapsed : ISA.Microsecond_Duration;
       Handler : not null access Interrupt_Handler'Class);
 
-   overriding function Get_Word_8
-     (This    : Instance;
-      Address : Address_Type)
-      return Word_8;
+   overriding procedure Get_Word_8
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_8);
 
    overriding procedure Set_Word_8
      (This    : in out Instance;
@@ -79,33 +79,33 @@ package body Pdp11.Devices.TTY is
    -- Get_Word_8 --
    ----------------
 
-   overriding function Get_Word_8
-     (This    : Instance;
-      Address : Address_Type)
-      return Word_8
+   overriding procedure Get_Word_8
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_8)
    is
    begin
       case TTY_Register_Index (Address) is
          when 0 =>
-            return Flag (This.Reader_Done, Reader_Done_Bit)
+            Value := Flag (This.Reader_Done, Reader_Done_Bit)
               + Flag (This.Reader_Intr, Reader_Intr_Bit)
               + Flag (This.Reader_Enable, Reader_Enable_Bit);
          when 1 =>
-            return Flag (This.Reader_Busy, Reader_Busy_Bit - 8);
+            Value := Flag (This.Reader_Busy, Reader_Busy_Bit - 8);
          when 2 =>
-            return This.Reader_Buffer;
+            Value := This.Reader_Buffer;
          when 3 =>
-            return 0;
+            Value := 0;
          when 4 =>
-            return Flag (This.Writer_Ready, Writer_Ready_Bit)
+            Value := Flag (This.Writer_Ready, Writer_Ready_Bit)
               + Flag (This.Writer_Intr, Writer_Intr_Bit)
               + Flag (This.Writer_Maint, Writer_Maint_Bit);
          when 5 =>
-            return 0;
+            Value := 0;
          when 6 =>
-            return 0;
+            Value := 0;
          when 7 =>
-            return 0;
+            Value := 0;
       end case;
    end Get_Word_8;
 

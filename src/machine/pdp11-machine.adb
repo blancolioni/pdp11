@@ -285,12 +285,7 @@ package body Pdp11.Machine is
       Dst_Addr : constant Address_Type :=
         (if Is_Register_Operand (Dst) then 0
          else This.Get_Operand_Address (Dst, Word));
-      Y        : constant Word_16 :=
-        (if Op = I_MOV
-         then 0
-         elsif Is_Register_Operand (Dst)
-         then This.Rs (Dst.Register)
-         else This.Get_Word_16 (Dst_Addr));
+      Y        : Word_16 := 0;
 
       procedure Store (Z : Word_16);
 
@@ -321,6 +316,14 @@ package body Pdp11.Machine is
       end Store;
 
    begin
+
+      if Op /= I_MOV then
+         if Is_Register_Operand (Dst) then
+            Y := This.Rs (Dst.Register);
+         else
+            This.Get_Word_16 (Dst_Addr, Y);
+         end if;
+      end if;
 
       case Op is
          when I_MOV =>
@@ -393,7 +396,7 @@ package body Pdp11.Machine is
       use Pdp11.ISA;
    begin
       if not This.Started then
-         This.Rs (7) := This.Get_Word_16 (16#FFFE#);
+         This.Get_Word_16 (16#FFFE#, This.Rs (7));
          This.Started := True;
          This.Clock := 0.0;
       end if;
@@ -636,13 +639,13 @@ package body Pdp11.Machine is
    -- Get_Float_32 --
    ------------------
 
-   overriding function Get_Float_32
-     (This : Instance;
-      Address : Address_Type)
-      return Float_32
+   overriding procedure Get_Float_32
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Float_32)
    is
    begin
-      return This.Memory.Get_Float_32 (Address);
+      This.Memory.Get_Float_32 (Address, Value);
    end Get_Float_32;
 
    -----------------------------
@@ -667,8 +670,10 @@ package body Pdp11.Machine is
          declare
             A  : constant Address_Type :=
                    This.Get_Operand_Address (Operand, 4);
+            V  : Float_32;
          begin
-            return This.Get_Float_32 (A);
+            This.Get_Float_32 (A, V);
+            return V;
          end;
       end if;
    end Get_Float_Operand_Value;
@@ -717,16 +722,21 @@ package body Pdp11.Machine is
 
          when Index_Mode =>
             declare
-               Index : constant Word_16 :=
-                         This.Get_Word_16 (Address_Type (PC));
+               Index : Word_16;
             begin
+               This.Get_Word_16 (Address_Type (PC), Index);
                PC := PC + 2;
                A := Address_Type (R + Index);
             end;
       end case;
 
       if Operand.Deferred then
-         A := Address_Type (This.Get_Word_16 (A));
+         declare
+            V : Word_16;
+         begin
+            This.Get_Word_16 (A, V);
+            A := Address_Type (V);
+         end;
       end if;
 
       return A;
@@ -760,9 +770,19 @@ package body Pdp11.Machine is
             end if;
 
             if Word then
-               return This.Get_Word_16 (Address);
+               declare
+                  W : Word_16;
+               begin
+                  This.Get_Word_16 (Address, W);
+                  return W;
+               end;
             else
-               return Word_16 (This.Get_Word_8 (Address));
+               declare
+                  W : Word_8;
+               begin
+                  This.Get_Word_8 (Address, W);
+                  return Word_16 (W);
+               end;
             end if;
          end;
       end if;
@@ -817,10 +837,11 @@ package body Pdp11.Machine is
          declare
             A  : Address_Type :=
                    This.Get_Operand_Address (Operand, 4);
-            X  : constant Float_32 := This.Get_Float_32 (A);
+            X  : Float_32;
             Y  : Float_32;
             Z  : Float_32;
          begin
+            This.Get_Float_32 (A, X);
             if Operand.Mode in Autodecrement_Mode | Autoincrement_Mode
               and then not Operand.Deferred
             then
@@ -829,7 +850,7 @@ package body Pdp11.Machine is
                A := A + 4;
             end if;
 
-            Y := This.Get_Float_32 (A);
+            This.Get_Float_32 (A, Y);
 
             if Operand.Mode in Autodecrement_Mode | Autoincrement_Mode
               and then not Operand.Deferred
@@ -839,7 +860,7 @@ package body Pdp11.Machine is
                A := A + 4;
             end if;
 
-            Z := This.Get_Float_32 (A);
+            This.Get_Float_32 (A, Z);
 
             return (X, Y, Z);
          end;
@@ -850,26 +871,26 @@ package body Pdp11.Machine is
    -- Get_Word_8 --
    ----------------
 
-   overriding function Get_Word_8
-     (This : Instance;
-      Address : Address_Type)
-      return Word_8
+   overriding procedure Get_Word_8
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_8)
    is
    begin
-      return This.Memory.Get_Word_8 (Address);
+      This.Memory.Get_Word_8 (Address, Value);
    end Get_Word_8;
 
    -----------------
    -- Get_Word_16 --
    -----------------
 
-   overriding function Get_Word_16
-     (This : Instance;
-      Address : Address_Type)
-      return Word_16
+   overriding procedure Get_Word_16
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_16)
    is
    begin
-      return This.Memory.Get_Word_16 (Address);
+      This.Memory.Get_Word_16 (Address, Value);
    end Get_Word_16;
 
    ---------------
@@ -900,8 +921,13 @@ package body Pdp11.Machine is
          --     & ", vector " & Pdp11.Images.Hex_Image (Word_16 (Vector)));
          Push (This.Get_PS);
          Push (This.Rs (7));
-         This.Rs (7) := This.Get_Word_16 (Vector);
-         This.Set_PS (This.Get_Word_16 (Vector + 2));
+         This.Get_Word_16 (Vector, This.Rs (7));
+         declare
+            PS : Word_16;
+         begin
+            This.Get_Word_16 (Vector + 2, PS);
+            This.Set_PS (PS);
+         end;
          This.Current_Timing :=
            Pdp11.ISA."+" (This.Current_Timing, 7.2);
          This.Waiting := False;
@@ -916,10 +942,12 @@ package body Pdp11.Machine is
       use Pdp11.ISA;
       PC : Word_16 renames This.Rs (7);
       SP : Word_16 renames This.Rs (6);
-      IR : constant Word_16 :=
-             This.Get_Word_16 (Address_Type (PC));
-      Rec : constant Instruction_Record := Decode (IR);
+      IR : Word_16;
+      Rec : Instruction_Record;
    begin
+
+      This.Get_Word_16 (Address_Type (PC), IR);
+      Rec := Decode (IR);
 
       if Trace_Execution then
          Ada.Text_IO.Put
@@ -988,8 +1016,9 @@ package body Pdp11.Machine is
 
          when I_RTS =>
             PC := This.Rs (Rec.Src.Register);
-            This.Rs (Rec.Src.Register) :=
-              This.Get_Word_16 (Address_Type (SP));
+
+            This.Get_Word_16 (Address_Type (SP), This.Rs (Rec.Src.Register));
+
             if Trace_Execution then
                Ada.Text_IO.Put
                  (" (" & Hex_Image (SP) & " "
@@ -1025,9 +1054,14 @@ package body Pdp11.Machine is
             This.Waiting := True;
 
          when I_RTI =>
-            PC := This.Get_Word_16 (Address_Type (SP));
+            This.Get_Word_16 (Address_Type (SP), PC);
             SP := SP + 2;
-            This.Set_PS (This.Get_Word_16 (Address_Type (SP)));
+            declare
+               PS : Word_16;
+            begin
+               This.Get_Word_16 (Address_Type (SP), PS);
+               This.Set_PS (PS);
+            end;
             SP := SP + 2;
 
          when I_IOT =>
@@ -1035,8 +1069,13 @@ package body Pdp11.Machine is
             This.Set_Word_16 (Address_Type (SP), This.Get_PS);
             SP := SP - 2;
             This.Set_Word_16 (Address_Type (SP), PC);
-            PC := This.Get_Word_16 (8#20#);
-            This.Set_PS (This.Get_Word_16 (8#22#));
+            This.Get_Word_16 (8#20#, PC);
+            declare
+               PS : Word_16;
+            begin
+               This.Get_Word_16 (8#22#, PS);
+               This.Set_PS (PS);
+            end;
 
          when I_RESET =>
             null;
@@ -1046,16 +1085,27 @@ package body Pdp11.Machine is
             This.Set_Word_16 (Address_Type (SP), This.Get_PS);
             SP := SP - 2;
             This.Set_Word_16 (Address_Type (SP), PC);
-            PC := This.Get_Word_16 (8#30#);
-            This.Set_PS (This.Get_Word_16 (8#32#));
+            This.Set_Word_16 (Address_Type (SP), PC);
+            This.Get_Word_16 (8#30#, PC);
+            declare
+               PS : Word_16;
+            begin
+               This.Get_Word_16 (8#32#, PS);
+               This.Set_PS (PS);
+            end;
 
          when I_TRAP =>
             SP := SP - 2;
             This.Set_Word_16 (Address_Type (SP), This.Get_PS);
             SP := SP - 2;
             This.Set_Word_16 (Address_Type (SP), PC);
-            PC := This.Get_Word_16 (8#34#);
-            This.Set_PS (This.Get_Word_16 (8#36#));
+            This.Get_Word_16 (8#34#, PC);
+            declare
+               PS : Word_16;
+            begin
+               This.Get_Word_16 (8#36#, PS);
+               This.Set_PS (PS);
+            end;
 
          when Floating_Point_F1 =>
             This.Float_Format_1 (Rec.Instruction, Rec.FAC, Rec.F_Operand);
@@ -1416,11 +1466,7 @@ package body Pdp11.Machine is
       Dst_Addr : constant Address_Type :=
                    (if Is_Register_Operand (Dst) then 0
                     else This.Get_Operand_Address (Dst, Word));
-
-      Y        : constant Word_16 :=
-                   (if Is_Register_Operand (Dst)
-                    then This.Rs (Dst.Register)
-                    else This.Get_Word_16 (Dst_Addr));
+      Y        : Word_16 := This.Rs (Dst.Register);
 
       procedure Result
         (Z         : Word_16;
@@ -1467,6 +1513,11 @@ package body Pdp11.Machine is
       end Result;
 
    begin
+
+      if not Is_Register_Operand (Dst) then
+         This.Get_Word_16 (Dst_Addr, Y);
+      end if;
+
       case Op is
          when I_CLR =>
             Result (0);
@@ -1583,8 +1634,9 @@ package body Pdp11.Machine is
          declare
             A : constant Address_Type :=
                   This.Get_Operand_Address (Operand, True);
-            X : Float_32 := This.Get_Float_32 (A);
+            X : Float_32;
          begin
+            This.Get_Float_32 (A, X);
             Update (X);
             This.Set_Float_32 (A, X);
             if (Operand.Mode = Autoincrement_Mode

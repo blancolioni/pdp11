@@ -76,10 +76,10 @@ package body Pdp11.Addressable.Memory is
    -- Get_Float_32 --
    ------------------
 
-   overriding function Get_Float_32
-     (Memory  : Root_Memory_Type;
-      Address : Address_Type)
-      return Float_32
+   overriding procedure Get_Float_32
+     (Memory  : in out Root_Memory_Type;
+      Address : Address_Type;
+      Value   : out Float_32)
    is
       use Pdp11.Devices;
       Index  : constant Device_Index :=
@@ -92,7 +92,7 @@ package body Pdp11.Addressable.Memory is
       if Device = null then
          raise Bad_Address;
       else
-         return Device.Get_Float_32 (Address - Base);
+         Device.Get_Float_32 (Address - Base, Value);
       end if;
    end Get_Float_32;
 
@@ -100,10 +100,10 @@ package body Pdp11.Addressable.Memory is
    -- Get_Word_8 --
    ----------------
 
-   overriding function Get_Word_8
-     (Memory  : Root_Memory_Type;
-      Address : Address_Type)
-      return Word_8
+   overriding procedure Get_Word_8
+     (Memory  : in out Root_Memory_Type;
+      Address : Address_Type;
+      Value   : out Word_8)
    is
       use Pdp11.Devices;
       Index  : constant Device_Index :=
@@ -116,7 +116,7 @@ package body Pdp11.Addressable.Memory is
       if Device = null then
          raise Bad_Address;
       else
-         return Device.Get_Word_8 (Address - Base);
+         Device.Get_Word_8 (Address - Base, Value);
       end if;
    end Get_Word_8;
 
@@ -124,10 +124,10 @@ package body Pdp11.Addressable.Memory is
    -- Get_Word_16 --
    -----------------
 
-   overriding function Get_Word_16
-     (Memory  : Root_Memory_Type;
-      Address : Address_Type)
-      return Word_16
+   overriding procedure Get_Word_16
+     (Memory  : in out Root_Memory_Type;
+      Address : Address_Type;
+      Value   : out Word_16)
    is
       use Pdp11.Devices;
       Index  : constant Device_Index :=
@@ -140,7 +140,7 @@ package body Pdp11.Addressable.Memory is
       if Device = null then
          raise Bad_Address;
       else
-         return Device.Get_Word_16 (Address - Base);
+         Device.Get_Word_16 (Address - Base, Value);
       end if;
    end Get_Word_16;
 

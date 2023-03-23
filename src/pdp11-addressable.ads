@@ -5,25 +5,25 @@ package Pdp11.Addressable is
    type Root_Addressable_Type is abstract tagged private;
    type Addressable_Reference is access all Root_Addressable_Type'Class;
 
-   function Get_Word_8
-     (From    : Root_Addressable_Type;
-      Address : Address_Type)
-      return Word_8;
+   procedure Get_Word_8
+     (From    : in out Root_Addressable_Type;
+      Address : Address_Type;
+      Value   : out Word_8);
 
-   function Get_Word_16
-     (From    : Root_Addressable_Type;
-      Address : Address_Type)
-      return Word_16;
+   procedure Get_Word_16
+     (From    : in out Root_Addressable_Type;
+      Address : Address_Type;
+      Value   : out Word_16);
 
-   function Get_Float_32
-     (From    : Root_Addressable_Type;
-      Address : Address_Type)
-      return Float_32;
+   procedure Get_Float_32
+     (From    : in out Root_Addressable_Type;
+      Address : Address_Type;
+      Value   : out Float_32);
 
-   function Get_Address
-     (From    : Root_Addressable_Type'Class;
-      Address : Address_Type)
-      return Address_Type;
+   procedure Get_Address
+     (From    : in out Root_Addressable_Type;
+      Address : Address_Type;
+      Value   : out Address_Type);
 
    procedure Set_Word_8
      (To      : in out Root_Addressable_Type;

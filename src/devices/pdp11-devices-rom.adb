@@ -21,11 +21,10 @@ package body Pdp11.Devices.ROM is
       Handler : not null access Interrupt_Handler'Class)
    is null;
 
-   overriding function Get_Word_8
-     (This    : Instance;
-      Address : Address_Type)
-      return Word_8
-   is (This.M (Address));
+   overriding procedure Get_Word_8
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_8);
 
    overriding procedure Set_Word_8
      (This    : in out Instance;
@@ -69,5 +68,18 @@ package body Pdp11.Devices.ROM is
       end;
 
    end Create;
+
+   ----------------
+   -- Get_Word_8 --
+   ----------------
+
+   overriding procedure Get_Word_8
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_8)
+   is
+   begin
+      Value := This.M (Address);
+   end Get_Word_8;
 
 end Pdp11.Devices.ROM;

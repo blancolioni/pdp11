@@ -18,10 +18,10 @@ package body Pdp11.Devices.RAM is
       Handler : not null access Interrupt_Handler'Class)
    is null;
 
-   overriding function Get_Word_8
-     (This    : Instance;
-      Address : Address_Type)
-      return Word_8;
+   overriding procedure Get_Word_8
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_8);
 
    overriding procedure Set_Word_8
      (This    : in out Instance;
@@ -52,13 +52,13 @@ package body Pdp11.Devices.RAM is
    -- Get_Word_8 --
    ----------------
 
-   overriding function Get_Word_8
-     (This    : Instance;
-      Address : Address_Type)
-      return Word_8
+   overriding procedure Get_Word_8
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_8)
    is
    begin
-      return This.M (Address);
+      Value := This.M (Address);
    end Get_Word_8;
 
    ----------------
