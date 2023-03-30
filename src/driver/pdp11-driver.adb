@@ -4,7 +4,6 @@ with Ada.Text_IO;
 
 with WL.Command_Line;
 
-with Pdp11.Assembler;
 with Pdp11.ISA;
 with Pdp11.Machine;
 
@@ -21,9 +20,7 @@ with Pdp11.Paths;
 with Pdp11.Tests;
 
 procedure Pdp11.Driver is
-   Assembly : Pdp11.Assembler.Assembly_Type;
    Machine  : Pdp11.Machine.Instance;
-
 begin
 
    if not Ada.Directories.Exists (".pdp11-options") then
@@ -40,28 +37,11 @@ begin
    end if;
 
    declare
-      Source : constant String :=
-                 Pdp11.Options.Source;
-      Output   : constant String :=
-                   (if Source = ""
-                    then Pdp11.Options.Object
-                    else Ada.Directories.Base_Name (Source) & ".o");
+      Object : constant String := Pdp11.Options.Object;
       Base_Address : constant Address_Type :=
                        Address_Type (Pdp11.Options.Base_Address);
    begin
-      if Source /= "" then
-         if not Pdp11.Options.Quiet then
-            Ada.Text_IO.Put_Line ("loading: " & Source);
-         end if;
-         Assembly.Load (Source);
-         Assembly.Link;
-         Assembly.Save (Output);
-         if not Pdp11.Options.Quiet then
-            Ada.Text_IO.Put_Line ("output: " & Output);
-         end if;
-      end if;
-
-      if Output /= "" and then Pdp11.Options.Execute then
+      if Object /= "" and then Pdp11.Options.Execute then
          declare
             Memory : constant Pdp11.Addressable.Memory.Memory_Reference :=
                        Pdp11.Addressable.Memory.Create;
@@ -70,7 +50,7 @@ begin
                 := (Pdp11.Devices.Line_Clock.Create,
                     Pdp11.Devices.RAM.Create (0, 255),
                     Pdp11.Devices.RAM.Create (16#1000#, 16#1FFF#),
-                    Pdp11.Devices.ROM.Create (Base_Address, Output),
+                    Pdp11.Devices.ROM.Create (Base_Address, Object),
                     Pdp11.Devices.RC11.Create,
                     Pdp11.Devices.TTY.Create);
 

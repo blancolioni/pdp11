@@ -1,6 +1,5 @@
 project_name = Pdp11
 source_dir = src
-source_dir = src/assembler
 source_dir = src/devices
 source_dir = src/driver
 source_dir = src/machine
@@ -8,7 +7,6 @@ source_dir = src/tests
 main_unit = pdp11-driver
 exec_name = pdp11
 config_dir = config
-depend = { project = gcs version = any }
 depend = { project = wlib version = any }
 path_unit = { unit = Pdp11.Paths
               path = src/pdp11-paths.ads }
