@@ -1,4 +1,8 @@
+with Ada.Directories;
+
 with WL.Binary_IO;
+
+with Pdp11.Paths;
 
 package body Pdp11.Devices.ROM is
 
@@ -32,13 +36,39 @@ package body Pdp11.Devices.ROM is
       Value   : Word_8)
    is null;
 
-   function Create
-     (Base : Address_Type;
-      Path : String)
+   ----------------
+   -- Get_Word_8 --
+   ----------------
+
+   overriding procedure Get_Word_8
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_8)
+   is
+   begin
+      Value := This.M (Address);
+   end Get_Word_8;
+
+   ----------
+   -- Load --
+   ----------
+
+   function Load
+     (Command : Command_Line.Device_Command_Line'Class)
       return Reference
    is
       use WL.Binary_IO;
       File : File_Type;
+      Base        : constant Word_16 := Command.Argument (1);
+      Local_Path  : constant String := Command.Argument (2);
+      Config_Path : constant String := Pdp11.Paths.Config_File (Local_Path);
+      Path        : constant String :=
+                      (if Ada.Directories.Exists (Local_Path)
+                       then Local_Path
+                       elsif Ada.Directories.Exists (Config_Path)
+                       then Config_Path
+                       else (raise Constraint_Error with
+                         "cannot find ROM file: " & Local_Path));
    begin
 
       Open (File, In_File, Path);
@@ -61,25 +91,12 @@ package body Pdp11.Devices.ROM is
            (Pdp11.Devices.Parent with
             Priority => <>,
             Vector   => <>,
-            Base     => Base + Memory'First,
-            Bound    => Base + Memory'Last,
+            Base     => Address_Type (Base) + Memory'First,
+            Bound    => Address_Type (Base) + Memory'Last,
             Last     => Memory'Last,
             M        => Memory);
       end;
 
-   end Create;
-
-   ----------------
-   -- Get_Word_8 --
-   ----------------
-
-   overriding procedure Get_Word_8
-     (This    : in out Instance;
-      Address : Address_Type;
-      Value   : out Word_8)
-   is
-   begin
-      Value := This.M (Address);
-   end Get_Word_8;
+   end Load;
 
 end Pdp11.Devices.ROM;

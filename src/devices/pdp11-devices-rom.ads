@@ -1,8 +1,9 @@
+with Pdp11.Devices.Command_Line;
+
 package Pdp11.Devices.ROM is
 
-   function Create
-     (Base : Address_Type;
-      Path : String)
+   function Load
+     (Command : Command_Line.Device_Command_Line'Class)
       return Reference;
 
 end Pdp11.Devices.ROM;

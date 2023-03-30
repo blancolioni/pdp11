@@ -58,23 +58,6 @@ package body Pdp11.Devices.TTY is
       Address : Address_Type;
       Value   : Word_8);
 
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-      return Reference
-   is
-   begin
-      return new Instance'
-        (Pdp11.Devices.Parent with
-           Priority => 4,
-           Vector   => 8#040#,
-           Base     => 16#FF70#,
-           Bound    => 16#FF77#,
-           others => <>);
-   end Create;
-
    ----------------
    -- Get_Word_8 --
    ----------------
@@ -108,6 +91,25 @@ package body Pdp11.Devices.TTY is
             Value := 0;
       end case;
    end Get_Word_8;
+
+   ----------
+   -- Load --
+   ----------
+
+   function Load
+     (Command : Command_Line.Device_Command_Line'Class)
+      return Reference
+   is
+      pragma Unreferenced (Command);
+   begin
+      return new Instance'
+        (Pdp11.Devices.Parent with
+           Priority => 4,
+         Vector   => 8#040#,
+         Base     => 16#FF70#,
+         Bound    => 16#FF77#,
+         others   => <>);
+   end Load;
 
    ----------------
    -- Set_Word_8 --

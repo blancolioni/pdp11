@@ -5,6 +5,9 @@ with Pdp11.Options;
 
 package body Pdp11.Addressable.Memory is
 
+   procedure Raise_Bad_Address
+     (Address : Address_Type);
+
    ----------------
    -- Add_Device --
    ----------------
@@ -90,7 +93,7 @@ package body Pdp11.Addressable.Memory is
                  Memory.Installed_Devices (Index).Device;
    begin
       if Device = null then
-         raise Bad_Address;
+         Raise_Bad_Address (Address);
       else
          Device.Get_Float_32 (Address - Base, Value);
       end if;
@@ -114,7 +117,7 @@ package body Pdp11.Addressable.Memory is
                  Memory.Installed_Devices (Index).Device;
    begin
       if Device = null then
-         raise Bad_Address;
+         Raise_Bad_Address (Address);
       else
          Device.Get_Word_8 (Address - Base, Value);
       end if;
@@ -138,11 +141,23 @@ package body Pdp11.Addressable.Memory is
                  Memory.Installed_Devices (Index).Device;
    begin
       if Device = null then
-         raise Bad_Address;
+         Raise_Bad_Address (Address);
       else
          Device.Get_Word_16 (Address - Base, Value);
       end if;
    end Get_Word_16;
+
+   -----------------------
+   -- Raise_Bad_Address --
+   -----------------------
+
+   procedure Raise_Bad_Address
+     (Address : Address_Type)
+   is
+   begin
+      raise Bad_Address with
+        "invalid address: " & Pdp11.Images.Octal_Image (Word_16 (Address));
+   end Raise_Bad_Address;
 
    ------------------
    -- Set_Float_32 --
@@ -164,7 +179,7 @@ package body Pdp11.Addressable.Memory is
       if Device /= null then
          Device.Set_Float_32 (Address - Base, Value);
       else
-         raise Bad_Address;
+         Raise_Bad_Address (Address);
       end if;
    end Set_Float_32;
 
@@ -188,7 +203,7 @@ package body Pdp11.Addressable.Memory is
       if Device /= null then
          Device.Set_Word_8 (Address - Base, Value);
       else
-         raise Bad_Address;
+         Raise_Bad_Address (Address);
       end if;
    end Set_Word_8;
 
@@ -212,8 +227,7 @@ package body Pdp11.Addressable.Memory is
       if Device /= null then
          Device.Set_Word_16 (Address - Base, Value);
       else
-         raise Bad_Address with "bad address: "
-           & Pdp11.Images.Hex_Image (Word_16 (Address));
+         Raise_Bad_Address (Address);
       end if;
    end Set_Word_16;
 

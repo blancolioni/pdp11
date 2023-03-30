@@ -28,26 +28,6 @@ package body Pdp11.Devices.RAM is
       Address : Address_Type;
       Value   : Word_8);
 
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-     (Base, Bound : Address_Type)
-      return Reference
-   is
-      Last : constant Address_Type := Bound - Base;
-   begin
-      return new Instance'
-        (Pdp11.Devices.Parent with
-           Priority => <>,
-           Vector   => <>,
-           Base     => Base,
-           Bound    => Bound,
-           Last     => Last,
-           M    => (others => 0));
-   end Create;
-
    ----------------
    -- Get_Word_8 --
    ----------------
@@ -60,6 +40,28 @@ package body Pdp11.Devices.RAM is
    begin
       Value := This.M (Address);
    end Get_Word_8;
+
+   ----------
+   -- Load --
+   ----------
+
+   function Load
+     (Command : Command_Line.Device_Command_Line'Class)
+      return Reference
+   is
+      Base  : constant Word_16 := Command.Argument (1);
+      Bytes : constant Word_16 := Command.Argument (2);
+
+   begin
+      return new Instance'
+        (Pdp11.Devices.Parent with
+           Priority => <>,
+         Vector   => <>,
+         Base     => Address_Type (Base),
+         Bound    => Address_Type (Base + Bytes - 1),
+         Last     => Address_Type (Bytes - 1),
+         M        => (others => 0));
+   end Load;
 
    ----------------
    -- Set_Word_8 --

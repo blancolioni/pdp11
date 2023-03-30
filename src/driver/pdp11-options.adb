@@ -4,11 +4,11 @@ package body Pdp11.Options is
 
    pragma Style_Checks (Off);
 
-   function Base_Address return Natural is
+   function Start return Natural is
    begin
       return WL.Command_Line.Find_Option
-               ("base-address", ' ', 0);
-   end Base_Address;
+               ("start", ' ', 0);
+   end Start;
 
    function Execute return Boolean is
    begin

@@ -1,0 +1,185 @@
+package body Pdp11.Devices.RF11 is
+
+   Base_Address       : constant := 8#177460#;
+   Bound_Address      : constant := 8#177477#;
+
+   DCS : constant := 0;
+   WC  : constant := 1;
+
+   GO  : constant := 0;
+
+   subtype Parent is Pdp11.Devices.Instance;
+
+   subtype Register_Address is Address_Type range 8#000# .. 8#007#;
+
+   type Register_Array is array (Register_Address) of Word_16;
+
+   Read_Mask : constant Register_Array :=
+                 (0      => 2#1111_1110_1111_1110#,
+                  others => 8#177_777#);
+
+   Write_Mask : constant Register_Array :=
+                  (0      => 2#0000_0001_0111_1111#,
+                   others => 8#177_777#);
+
+   type Disk_State is
+     (Idle, Seeking, Transferring);
+
+   type Transfer_Type is (No_Operation, Write, Read, Write_Check);
+
+   type Instance is new Parent with
+      record
+         Rs        : Register_Array := (others => 0);
+         State     : Disk_State := Idle;
+         Transfer  : Transfer_Type := No_Operation;
+         Wait_Time : Pdp11.ISA.Microsecond_Duration := 0.0;
+      end record;
+
+   overriding function Name (This : Instance) return String
+   is ("rf11");
+
+   overriding procedure Tick
+     (This    : in out Instance;
+      Elapsed : ISA.Microsecond_Duration;
+      Handler : not null access Interrupt_Handler'Class);
+
+   overriding procedure Get_Word_16
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_16);
+
+   overriding procedure Set_Word_16
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : Word_16);
+
+   function DCS_Bits (This               : Instance'Class;
+                      Lo_Bit, Hi_Bit : Natural)
+                      return Word_16
+   is (This.Rs (DCS) / 2 ** Lo_Bit mod 2 ** (Hi_Bit - Lo_Bit + 1));
+
+   function DCS_Bit (This : Instance'Class;
+                     Bit  : Natural)
+                     return Boolean
+   is (This.Rs (DCS) / 2 ** Bit mod 2 = 1);
+
+   procedure DCS_Clear
+     (This : in out Instance'Class;
+      Bit  : Natural);
+
+   procedure DCS_Set
+     (This : in out Instance'Class;
+      Bit  : Natural);
+
+   ---------------
+   -- DCS_Clear --
+   ---------------
+
+   procedure DCS_Clear
+     (This : in out Instance'Class;
+      Bit  : Natural)
+   is
+      X : Word_16 renames This.Rs (DCS);
+   begin
+      X := X and not (2 ** Bit);
+   end DCS_Clear;
+
+   -------------
+   -- DCS_Set --
+   -------------
+
+   procedure DCS_Set
+     (This : in out Instance'Class;
+      Bit  : Natural)
+   is
+      X : Word_16 renames This.Rs (DCS);
+   begin
+      X := X or 2 ** Bit;
+   end DCS_Set;
+
+   -----------------
+   -- Get_Word_16 --
+   -----------------
+
+   overriding procedure Get_Word_16
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : out Word_16)
+   is
+   begin
+      Value := This.Rs (Address / 2) and Read_Mask (Address / 2);
+   end Get_Word_16;
+
+   ----------
+   -- Load --
+   ----------
+
+   function Load
+     (Command : Command_Line.Device_Command_Line'Class)
+      return Reference
+   is
+      pragma Unreferenced (Command);
+   begin
+      return new Instance'
+        (Pdp11.Devices.Parent with
+           Priority => 5,
+         Vector   => 8#210#,
+         Base     => Base_Address,
+         Bound    => Bound_Address,
+         others   => <>);
+   end Load;
+
+   -----------------
+   -- Set_Word_16 --
+   -----------------
+
+   overriding procedure Set_Word_16
+     (This    : in out Instance;
+      Address : Address_Type;
+      Value   : Word_16)
+   is
+   begin
+      This.Rs (Address / 2) :=
+        (This.Rs (Address / 2) and not Write_Mask (Address / 2))
+        or (Value and Write_Mask (Address / 2));
+   end Set_Word_16;
+
+   ----------
+   -- Tick --
+   ----------
+
+   overriding procedure Tick
+     (This    : in out Instance;
+      Elapsed : ISA.Microsecond_Duration;
+      Handler : not null access Interrupt_Handler'Class)
+   is
+      use type Pdp11.ISA.Microsecond_Duration;
+   begin
+      if Elapsed < This.Wait_Time then
+         This.Wait_Time := This.Wait_Time - Elapsed;
+         return;
+      end if;
+
+      case This.State is
+         when Idle =>
+            if This.DCS_Bit (GO) then
+               This.DCS_Clear (GO);
+               This.State := Seeking;
+               This.Wait_Time := 1000.0;
+            end if;
+
+         when Seeking =>
+            This.Transfer := Transfer_Type'Val (This.DCS_Bits (1, 2));
+            This.State := Transferring;
+            This.Wait_Time :=
+              Pdp11.ISA.Microsecond_Duration (not This.Rs (WC) + 1);
+
+         when Transferring =>
+            This.DCS_Set (7);
+            This.State := Idle;
+            This.Transfer := No_Operation;
+            This.Wait_Time := 0.0;
+      end case;
+   end Tick;
+
+end Pdp11.Devices.RF11;

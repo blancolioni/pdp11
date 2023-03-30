@@ -1,0 +1,7 @@
+device = line-clock
+device = ram 0 377
+device = ram 10_000 10_000
+device = rom 173700 boot.o
+device = rf11
+device = tty
+start = 173700

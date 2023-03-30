@@ -38,26 +38,6 @@ package body Pdp11.Devices.Line_Clock is
       Address : Address_Type;
       Value   : Word_8);
 
-   ------------
-   -- Create --
-   ------------
-
-   function Create return Reference is
-   begin
-      return new Instance'
-        (Pdp11.Devices.Parent with
-           Priority => Interrupt_Priority,
-           Vector   => Interrupt_Vector,
-           Base     => Base_Address,
-           Bound    => Bound_Address,
-           Monitor_Bit => <>,
-           Interrupt_Bit => <>,
-           Last_Interrupt => <>,
-           Frequency      => <>,
-           Cycle          => <>,
-           Elapsed        => <>);
-   end Create;
-
    ----------------
    -- Get_Word_8 --
    ----------------
@@ -76,6 +56,30 @@ package body Pdp11.Devices.Line_Clock is
          Value := 0;
       end if;
    end Get_Word_8;
+
+   ----------
+   -- Load --
+   ----------
+
+   function Load
+     (Command : Command_Line.Device_Command_Line'Class)
+      return Reference
+   is
+      pragma Unreferenced (Command);
+   begin
+      return new Instance'
+        (Pdp11.Devices.Parent with
+           Priority       => Interrupt_Priority,
+         Vector         => Interrupt_Vector,
+         Base           => Base_Address,
+         Bound          => Bound_Address,
+         Monitor_Bit    => <>,
+         Interrupt_Bit  => <>,
+         Last_Interrupt => <>,
+         Frequency      => <>,
+         Cycle          => <>,
+         Elapsed        => <>);
+   end Load;
 
    ----------------
    -- Set_Word_8 --

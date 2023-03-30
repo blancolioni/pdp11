@@ -8,5 +8,6 @@ main_unit = pdp11-driver
 exec_name = pdp11
 config_dir = config
 depend = { project = wlib version = any }
+depend = { project = tropos version = any }
 path_unit = { unit = Pdp11.Paths
               path = src/pdp11-paths.ads }
