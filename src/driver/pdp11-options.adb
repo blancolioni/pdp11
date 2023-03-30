@@ -58,4 +58,34 @@ package body Pdp11.Options is
                ("warnings", ' ');
    end Warnings;
 
+   function Create_Disk return Boolean is
+   begin
+      return WL.Command_Line.Find_Option
+               ("create-disk", ' ');
+   end Create_Disk;
+
+   function Write_Disk return Boolean is
+   begin
+      return WL.Command_Line.Find_Option
+               ("write-disk", ' ');
+   end Write_Disk;
+
+   function Disk_Type return String is
+   begin
+      return WL.Command_Line.Find_Option
+               ("disk-type", ' ');
+   end Disk_Type;
+
+   function Disk_File return String is
+   begin
+      return WL.Command_Line.Find_Option
+               ("disk-file", ' ');
+   end Disk_File;
+
+   function Disk_Address return String is
+   begin
+      return WL.Command_Line.Find_Option
+               ("disk-address", ' ');
+   end Disk_Address;
+
 end Pdp11.Options;

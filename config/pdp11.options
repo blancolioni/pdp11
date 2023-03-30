@@ -9,5 +9,9 @@ package Pdp11.Options is
    Time_Limit    : Natural;
    Trace         : Boolean;
    Warnings      : Boolean;
-
+   Create_Disk   : Boolean;
+   Write_Disk    : Boolean;
+   Disk_Type     : String;
+   Disk_File     : String;
+   Disk_Address  : String;
 end Pdp11.Options;

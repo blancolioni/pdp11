@@ -15,9 +15,24 @@ with Pdp11.Devices.Loader;
 with Pdp11.Options;
 with Pdp11.Paths;
 with Pdp11.Tests;
+with Pdp11.Tools;
 
 procedure Pdp11.Driver is
    Machine  : Pdp11.Machine.Instance;
+
+   function Ask (Prompt : String) return String;
+
+   ---------
+   -- Ask --
+   ---------
+
+   function Ask (Prompt : String) return String is
+   begin
+      Ada.Text_IO.Put (Prompt);
+      Ada.Text_IO.Flush;
+      return Ada.Text_IO.Get_Line;
+   end Ask;
+
 begin
 
    if not Ada.Directories.Exists (".pdp11-options") then
@@ -31,6 +46,40 @@ begin
    if Pdp11.Options.Test_Encoding then
       Pdp11.Tests.Test_Encoding;
       Pdp11.Tests.Test_Decoding;
+      return;
+   end if;
+
+   if Pdp11.Options.Create_Disk then
+      declare
+         Disk_File : constant String :=
+                       (if Pdp11.Options.Disk_File = ""
+                        then Ask ("disk file: ")
+                        else Pdp11.Options.Disk_File);
+      begin
+         Pdp11.Tools.Create_Disk_Image ("RF11", Disk_File);
+      end;
+      return;
+   end if;
+
+   if Pdp11.Options.Write_Disk then
+      declare
+         Disk_File : constant String :=
+                       (if Pdp11.Options.Disk_File = ""
+                        then Ask ("disk file: ")
+                        else Pdp11.Options.Disk_File);
+         Object_File : constant String :=
+                         (if Pdp11.Options.Object = ""
+                          then Ask ("object file: ")
+                          else Pdp11.Options.Object);
+         Disk_Address : constant String :=
+                          (if Pdp11.Options.Disk_Address = ""
+                           then Ask ("disk address: ")
+                           else Pdp11.Options.Disk_Address);
+         Start_Offset : constant Natural :=
+                          Natural'Value ("8#" & Disk_Address & "#");
+      begin
+         Pdp11.Tools.Disk_Write ("RF11", Disk_File, Object_File, Start_Offset);
+      end;
       return;
    end if;
 

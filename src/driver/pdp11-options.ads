@@ -10,5 +10,10 @@ package Pdp11.Options is
    function Time_Limit return Natural;
    function Trace return Boolean;
    function Warnings return Boolean;
+   function Create_Disk return Boolean;
+   function Write_Disk return Boolean;
+   function Disk_Type return String;
+   function Disk_File return String;
+   function Disk_Address return String;
 
 end Pdp11.Options;
