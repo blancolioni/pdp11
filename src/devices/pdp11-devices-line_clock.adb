@@ -62,10 +62,12 @@ package body Pdp11.Devices.Line_Clock is
    ----------
 
    function Load
-     (Command : Command_Line.Device_Command_Line'Class)
+     (Command : Command_Line.Device_Command_Line'Class;
+      Bus     : not null access
+        Pdp11.Addressable.Root_Addressable_Type'Class)
       return Reference
    is
-      pragma Unreferenced (Command);
+      pragma Unreferenced (Command, Bus);
    begin
       return new Instance'
         (Pdp11.Devices.Parent with

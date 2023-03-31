@@ -19,7 +19,9 @@ package body Pdp11.Devices.Loader is
    ----------
 
    function Load
-     (Command : String)
+     (Command : String;
+      Bus     : not null access
+        Pdp11.Addressable.Root_Addressable_Type'Class)
       return Reference
    is
       Command_Line : constant Devices.Command_Line.Device_Command_Line'Class :=
@@ -29,7 +31,7 @@ package body Pdp11.Devices.Loader is
          raise Constraint_Error with
            "no such device: " & Command_Line.Command;
       end if;
-      return Loaders.Element (Command_Line.Command) (Command_Line);
+      return Loaders.Element (Command_Line.Command) (Command_Line, Bus);
    end Load;
 
    --------------

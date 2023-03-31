@@ -1,3 +1,8 @@
+with System.Storage_Elements;
+with Ada.Sequential_IO;
+with Ada.Text_IO;
+with Pdp11.Images;
+
 package body Pdp11.Devices.RF11 is
 
    Base_Address       : constant := 8#177460#;
@@ -5,6 +10,12 @@ package body Pdp11.Devices.RF11 is
 
    DCS : constant := 0;
    WC  : constant := 1;
+   CMA : constant := 2;
+   DAR : constant := 3;
+   DAE : constant := 4;
+   --  DDB : constant := 5;
+   --  MA  : constant := 6;
+   --  ADS : constant := 7;
 
    GO  : constant := 0;
 
@@ -27,13 +38,33 @@ package body Pdp11.Devices.RF11 is
 
    type Transfer_Type is (No_Operation, Write, Read, Write_Check);
 
+   Disk_Unit_Count  : constant := 8;
+   Track_Count      : constant := 128;
+   Track_Length     : constant := 2048;
+   Disk_Words       : constant := Track_Length * Track_Count;
+   Disk_Bytes       : constant := Disk_Words * 2;
+   Total_Disk_Store : constant := Disk_Unit_Count * Disk_Bytes;
+
+   subtype Disk_Storage_Array is
+     System.Storage_Elements.Storage_Array (1 .. Total_Disk_Store);
+
+   package Disk_Storage_IO is
+     new Ada.Sequential_IO (Disk_Storage_Array);
+
+   subtype Disk_Path is String (1 .. 64);
+
    type Instance is new Parent with
       record
          Rs        : Register_Array := (others => 0);
          State     : Disk_State := Idle;
          Transfer  : Transfer_Type := No_Operation;
          Wait_Time : Pdp11.ISA.Microsecond_Duration := 0.0;
+         Bus       : Pdp11.Addressable.Addressable_Reference;
+         Image     : Disk_Storage_Array;
+         Path      : Disk_Path;
       end record;
+
+   type Reference is access all Instance'Class;
 
    overriding function Name (This : Instance) return String
    is ("rf11");
@@ -115,18 +146,29 @@ package body Pdp11.Devices.RF11 is
    ----------
 
    function Load
-     (Command : Command_Line.Device_Command_Line'Class)
-      return Reference
+     (Command : Command_Line.Device_Command_Line'Class;
+      Bus     : not null access
+        Pdp11.Addressable.Root_Addressable_Type'Class)
+      return Pdp11.Devices.Reference
    is
-      pragma Unreferenced (Command);
-   begin
-      return new Instance'
+      use Disk_Storage_IO;
+      File : File_Type;
+      Path : constant String := Command.Argument (1);
+      This : constant Reference := new Instance'
         (Pdp11.Devices.Parent with
-           Priority => 5,
+         Priority => 5,
          Vector   => 8#210#,
          Base     => Base_Address,
          Bound    => Bound_Address,
+         Bus      => Pdp11.Addressable.Addressable_Reference (Bus),
+         Path     => (others => ' '),
          others   => <>);
+   begin
+      This.Path (1 .. Path'Length) := Path;
+      Open (File, In_File, Path);
+      Read (File, This.Image);
+      Close (File);
+      return Pdp11.Devices.Reference (This);
    end Load;
 
    -----------------
@@ -164,6 +206,7 @@ package body Pdp11.Devices.RF11 is
          when Idle =>
             if This.DCS_Bit (GO) then
                This.DCS_Clear (GO);
+               This.DCS_Clear (7);
                This.State := Seeking;
                This.Wait_Time := 1000.0;
             end if;
@@ -171,14 +214,49 @@ package body Pdp11.Devices.RF11 is
          when Seeking =>
             This.Transfer := Transfer_Type'Val (This.DCS_Bits (1, 2));
             This.State := Transferring;
-            This.Wait_Time :=
-              Pdp11.ISA.Microsecond_Duration (not This.Rs (WC) + 1);
+            This.Wait_Time := 20_000.0;
 
          when Transferring =>
-            This.DCS_Set (7);
-            This.State := Idle;
-            This.Transfer := No_Operation;
-            This.Wait_Time := 0.0;
+            declare
+               use System.Storage_Elements;
+               A : constant Storage_Offset :=
+                     (Storage_Offset (This.Rs (DAR))
+                      + Storage_Offset (This.Rs (DAE) mod 32) * 65536)
+                     * 2
+                       + 1;
+               W : constant Word_16 :=
+                     Word_16 (This.Image (A))
+                     + 256 * Word_16 (This.Image (A + 1));
+            begin
+               if False then
+                  Ada.Text_IO.Put_Line
+                    (Pdp11.Images.Hex_Image (Word_8 (A / 65536))
+                     & ":"
+                     & Pdp11.Images.Hex_Image (Word_16 (A mod 65536))
+                     & " -> "
+                     & Pdp11.Images.Hex_Image (This.Rs (CMA))
+                     & ": "
+                     & Pdp11.Images.Hex_Image (W));
+               end if;
+               This.Bus.Set_Word_16
+                 (Address_Type (This.Rs (CMA)), W);
+               This.Rs (CMA) := This.Rs (CMA) + 2;
+               This.Rs (DAR) := This.Rs (DAR) + 1;
+               if This.Rs (DAR)  = 0 then
+                  This.Rs (DAE) :=
+                    (This.Rs (DAE) and 16#FFC0#)
+                      + (This.Rs (DAE) mod 32 + 1);
+               end if;
+               This.Rs (WC) := This.Rs (WC) + 1;
+               if This.Rs (WC) = 0 then
+                  This.DCS_Set (7);
+                  This.State := Idle;
+                  This.Transfer := No_Operation;
+                  This.Wait_Time := 0.0;
+               else
+                  This.Wait_Time := 19.2;
+               end if;
+            end;
       end case;
    end Tick;
 

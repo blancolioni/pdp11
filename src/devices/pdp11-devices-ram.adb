@@ -46,9 +46,12 @@ package body Pdp11.Devices.RAM is
    ----------
 
    function Load
-     (Command : Command_Line.Device_Command_Line'Class)
+     (Command : Command_Line.Device_Command_Line'Class;
+      Bus     : not null access
+        Pdp11.Addressable.Root_Addressable_Type'Class)
       return Reference
    is
+      pragma Unreferenced (Bus);
       Base  : constant Word_16 := Command.Argument (1);
       Bytes : constant Word_16 := Command.Argument (2);
 

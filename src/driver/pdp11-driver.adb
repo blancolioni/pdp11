@@ -106,7 +106,7 @@ begin
         (Command : String)
       is
          Device : constant Pdp11.Devices.Reference :=
-                    Pdp11.Devices.Loader.Load (Command);
+                    Pdp11.Devices.Loader.Load (Command, Memory);
       begin
          Machine.Add_Device (Device);
       end Install_Device;
