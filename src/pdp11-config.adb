@@ -90,7 +90,24 @@ package body Pdp11.Config is
       Open (File, In_File, Path);
       while not End_Of_File (File) loop
          declare
-            Line : constant String := Get_Line (File);
+
+            function Without_Comment (Line : String) return String;
+
+            ---------------------
+            -- Without_Comment --
+            ---------------------
+
+            function Without_Comment (Line : String) return String is
+               Hash : constant Natural := Index (Line, "#");
+            begin
+               if Hash > 0 then
+                  return Line (Line'First .. Hash - 1);
+               else
+                  return Line;
+               end if;
+            end Without_Comment;
+
+            Line : constant String := Without_Comment (Get_Line (File));
             Equal_Sign : constant Natural := Index (Line, "=");
             Section    : constant String :=
                            Trim
@@ -103,10 +120,13 @@ package body Pdp11.Config is
                               else Line (Equal_Sign + 1 .. Line'Last)),
                               Ada.Strings.Both);
          begin
-            if not Configuration.Contains (Section) then
-               Configuration.Insert (Section, Configuration_Lists.Empty_List);
+            if Line /= "" then
+               if not Configuration.Contains (Section) then
+                  Configuration.Insert
+                    (Section, Configuration_Lists.Empty_List);
+               end if;
+               Configuration (Section).Append (Value);
             end if;
-            Configuration (Section).Append (Value);
          end;
       end loop;
    end Load_Configuration;
