@@ -12,6 +12,7 @@ with Pdp11.Addressable.Memory;
 
 with Pdp11.Config;
 with Pdp11.Devices.Loader;
+with Pdp11.Images;
 with Pdp11.Options;
 with Pdp11.Paths;
 with Pdp11.Tests;
@@ -95,6 +96,11 @@ begin
       Memory : constant Pdp11.Addressable.Memory.Memory_Reference :=
                  Pdp11.Addressable.Memory.Create;
 
+      Start : constant Word_16 :=
+                (if Pdp11.Options.Start /= 0
+                 then Word_16 (Pdp11.Options.Start)
+                 else Pdp11.Config.Get_Config ("start"));
+
       procedure Install_Device
         (Command : String);
 
@@ -111,15 +117,6 @@ begin
          Machine.Add_Device (Device);
       end Install_Device;
 
-      --  Device_List : constant array (Positive range <>)
-      --    of Pdp11.Devices.Reference
-      --      := (Pdp11.Devices.Line_Clock.Create,
-      --          Pdp11.Devices.RAM.Create (0, 255),
-      --          Pdp11.Devices.RAM.Create (16#1000#, 16#1FFF#),
-      --          Pdp11.Devices.ROM.Create (Base_Address, Object),
-      --          Pdp11.Devices.RF11.Create,
-      --          Pdp11.Devices.TTY.Create);
-
    begin
 
       Machine.Create (Memory);
@@ -127,26 +124,12 @@ begin
       Pdp11.Config.Iterate_Config
         ("device", Install_Device'Access);
 
-      --  Memory.Add_Device
-      --   (Driver => Pdp11.Drivers.ROM.Create_ROM_Driver (Output),
-      --    Base   => Base_Address);
-      --  Memory.Add_Driver
-      --   (Driver => Pdp11.Drivers.RAM.Create_RAM (4095),
-      --    Base   => 4096);
-      --  Memory.Add_Driver
-      --   (Driver => Pdp11.Drivers.RAM.Create_RAM (256),
-      --    Base   => 0);
-      --  Memory.Add_Driver
-      --   (Driver => Pdp11.Drivers.TTY.TTY_Driver,
-      --    Base   => 16#FF80#);
-
-      if Pdp11.Options.Start /= 0 then
-         Machine.Set_Register (7, Word_16 (Pdp11.Options.Start));
-      else
-         Machine.Set_Register
-           (7, Pdp11.Config.Get_Config ("start"));
+      if Pdp11.Options.Object /= "" then
+         Install_Device ("rom " & Pdp11.Images.Octal_Image (Start)
+                         & " " & Pdp11.Options.Object);
       end if;
 
+      Machine.Set_Register (7, Start);
    end;
 
    if Pdp11.Options.Execute then
