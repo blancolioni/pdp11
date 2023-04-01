@@ -46,6 +46,12 @@ package body Pdp11.Options is
                ("time-limit", ' ', 0);
    end Time_Limit;
 
+   function Limit_Speed return Boolean is
+   begin
+      return WL.Command_Line.Find_Option
+               ("limit-speed", ' ');
+   end Limit_Speed;
+
    function Trace return Boolean is
    begin
       return WL.Command_Line.Find_Option

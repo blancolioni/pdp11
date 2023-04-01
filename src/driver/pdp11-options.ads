@@ -8,6 +8,7 @@ package Pdp11.Options is
    function Source return String;
    function Test_Encoding return Boolean;
    function Time_Limit return Natural;
+   function Limit_Speed return Boolean;
    function Trace return Boolean;
    function Warnings return Boolean;
    function Create_Disk return Boolean;

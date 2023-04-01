@@ -9,6 +9,7 @@ with Pdp11.Options;
 package body Pdp11.Machine is
 
    Trace_Execution : Boolean := False;
+   Limit_Speed     : Boolean := False;
 
    package Float_32_Functions is
      new Ada.Numerics.Generic_Elementary_Functions (Float_32);
@@ -231,7 +232,7 @@ package body Pdp11.Machine is
       This.Devices.Clear;
    end Clear_Devices;
 
------------------
+   -----------------
    -- Clock_Image --
    -----------------
 
@@ -416,6 +417,22 @@ package body Pdp11.Machine is
          end;
       end;
 
+      if Limit_Speed then
+         declare
+            use type Ada.Calendar.Time;
+            Now : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+            Elapsed_Real : constant Duration := Now - This.Start_Time;
+            Elapsed_Machine : constant Duration :=
+                                Duration
+                                  (This.Clock - This.Start_Clock)
+                                  / 1.0e6;
+         begin
+            if Elapsed_Machine > Elapsed_Real then
+               delay Elapsed_Machine - Elapsed_Real;
+            end if;
+         end;
+      end if;
+
       while This.Waiting loop
          This.Clock := This.Clock + 1.0;
          for Device of This.Devices loop
@@ -455,6 +472,9 @@ package body Pdp11.Machine is
 
       Start_Clock := This.Clock;
       End_Clock   := This.Clock + Quantum;
+
+      This.Start_Time := Ada.Calendar.Clock;
+      This.Start_Clock := This.Clock;
 
       while This.Clock < End_Clock loop
          This.Execute_Next_Instruction;
@@ -1229,6 +1249,22 @@ package body Pdp11.Machine is
       Ada.Text_IO.Put (if This.C then "C" else "-");
       Ada.Text_IO.Put (This.Clock_Image);
       Ada.Text_IO.New_Line;
+
+      declare
+         use type Ada.Calendar.Time;
+         use type Pdp11.ISA.Microsecond_Duration;
+         Now : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+         Elapsed_Real : constant Duration := Now - This.Start_Time;
+         Elapsed_Machine : constant Duration :=
+                             Duration
+                               (This.Clock - This.Start_Clock)
+                               / 1.0e6;
+      begin
+         Ada.Text_IO.Put_Line
+           ("elapsed: machine" & Elapsed_Machine'Image
+            & "; real" & Elapsed_Real'Image);
+      end;
+
    end Report;
 
    ------------------
@@ -1609,6 +1645,9 @@ package body Pdp11.Machine is
    is
    begin
       Trace_Execution := Pdp11.Options.Trace;
+      This.Start_Time := Ada.Calendar.Clock;
+      This.Start_Clock := This.Clock;
+      Limit_Speed := Pdp11.Options.Limit_Speed;
       loop
          This.Execute_Next_Instruction;
       end loop;

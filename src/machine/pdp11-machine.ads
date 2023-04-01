@@ -1,3 +1,4 @@
+private with Ada.Calendar;
 private with Ada.Containers.Doubly_Linked_Lists;
 
 with Pdp11.ISA;
@@ -102,6 +103,8 @@ private
          Clock               : ISA.Microsecond_Duration := 0.0;
          Current_Instruction : ISA.Instruction_Type;
          Current_Timing      : ISA.Microsecond_Duration;
+         Start_Time          : Ada.Calendar.Time;
+         Start_Clock         : ISA.Microsecond_Duration;
          Memory              : Pdp11.Addressable.Memory.Memory_Reference;
       end record;
 
