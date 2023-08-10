@@ -450,7 +450,7 @@ package body Pdp11.Machine is
      (This    : in out Instance'Class;
       Quantum : Pdp11.ISA.Microsecond_Duration)
    is
-      Used : Pdp11.ISA.Microsecond_Duration with Unreferenced;
+      Used : Pdp11.ISA.Microsecond_Duration;
    begin
       This.Execute_Quantum (Quantum, Used);
    end Execute_Quantum;

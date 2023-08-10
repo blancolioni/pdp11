@@ -17,4 +17,7 @@ src/pdp11-paths.ads
 log
 
 # Other stuff
-tools
+tools/obj/
+/bin/
+/alire/
+/config/

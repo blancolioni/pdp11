@@ -1,7 +1,0 @@
-base-address = 49152
-execute = yes
-quiet = yes
-test-encoding = no
-time-limit = 0
-trace = no
-warnings = no

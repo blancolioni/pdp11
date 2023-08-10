@@ -36,12 +36,6 @@ procedure Pdp11.Driver is
 
 begin
 
-   if not Ada.Directories.Exists (".pdp11-options") then
-      Ada.Directories.Copy_File
-        (Source_Name => Pdp11.Paths.Config_File ("default-options.txt"),
-         Target_Name => ".pdp11-options");
-   end if;
-
    WL.Command_Line.Load_Defaults (".pdp11-options");
 
    if Pdp11.Options.Test_Encoding then

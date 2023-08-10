@@ -1,0 +1,15 @@
+name = "pdp11"
+description = "Pdp-11 emulator with floating point"
+version = "0.1.0-dev"
+
+authors = ["Fraser Wilson"]
+maintainers = ["Fraser Wilson <fraser@thewhitelion.eu>"]
+maintainers-logins = ["blancolioni"]
+licenses = "GPL-3.0-or-later"
+website = "https://github.com/blancolioni/pdp11"
+tags = ["emulator", "pdp11"]
+
+executables = ["pdp11-driver"]
+
+[[depends-on]]
+wl_lib = "~0.1.1-dev"
