@@ -131,6 +131,22 @@ package body Pdp11.Images is
       end return;
    end Octal_Image;
 
+   -----------------
+   -- Octal_Image --
+   -----------------
+
+   function Octal_Image (X : Word_8) return String is
+      Ds : constant String := "01234567";
+      It : Word_8 := X;
+   begin
+      return Image : String (1 .. 3) do
+         for Ch of reverse Image loop
+            Ch := Ds (Positive (It mod 8 + 1));
+            It := It / 8;
+         end loop;
+      end return;
+   end Octal_Image;
+
    --------------------
    -- Register_Image --
    --------------------
