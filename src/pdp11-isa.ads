@@ -23,6 +23,12 @@ package Pdp11.ISA is
       return Boolean
    is (Operand.Mode = Register_Mode and then not Operand.Deferred);
 
+   function Has_Immediate_Word
+     (Operand : Operand_Type)
+      return Boolean
+   is ((Operand.Mode = Autoincrement_Mode and then Operand.Register = 7)
+       or else Operand.Mode = Index_Mode);
+
    Immediate_Operand : constant Operand_Type :=
                          Operand_Type'
                            (Mode     => Autoincrement_Mode,
