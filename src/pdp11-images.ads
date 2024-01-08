@@ -12,6 +12,7 @@ package Pdp11.Images is
    function Hex_Image (X : Word_16) return String;
    function Hex_Image (X : Word_8) return String;
    function Octal_Image (X : Word_16) return String;
+   function Octal_Image (X : Word_8) return String;
    function Image (Rec : Pdp11.ISA.Instruction_Record) return String;
 
 end Pdp11.Images;
