@@ -119,6 +119,36 @@ package body Pdp11.Images is
    -- Octal_Image --
    -----------------
 
+   function Octal_Image
+     (X    : Word_32;
+      Trim : Boolean)
+      return String
+   is
+      Ds : constant String := "01234567";
+      It : Word_32 := X;
+   begin
+      if Trim and then X = 0 then
+         return "0";
+      end if;
+
+      declare
+         Image : String (1 .. 12);
+      begin
+         for I in reverse Image'Range loop
+            Image (I) := Ds (Positive (It mod 8 + 1));
+            It := It / 8;
+            if It = 0 then
+               return Image (I .. Image'Last);
+            end if;
+         end loop;
+         return Image;
+      end;
+   end Octal_Image;
+
+   -----------------
+   -- Octal_Image --
+   -----------------
+
    function Octal_Image (X : Word_16) return String is
       Ds : constant String := "01234567";
       It : Word_16 := X;

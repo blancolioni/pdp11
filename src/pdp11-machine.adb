@@ -344,6 +344,11 @@ package body Pdp11.Machine is
             declare
                Z : constant Word_16 := X and Y;
             begin
+               if Trace_Execution then
+                  Ada.Text_IO.Put
+                    (" " & Hex_Image (X) & " and " & Hex_Image (Y)
+                     & " -> " & Hex_Image (Z));
+               end if;
                This.Set_NZ (Word, Z);
                This.V := False;
             end;
@@ -534,6 +539,10 @@ package body Pdp11.Machine is
          Dst : in out Float_32)
       is
       begin
+         if Trace_Execution then
+            Ada.Text_IO.Put (Src'Image & Dst'Image);
+         end if;
+
          case Instruction is
             when I_MULF =>
                Dst := Dst * Src;
@@ -587,7 +596,7 @@ package body Pdp11.Machine is
 
          if Trace_Execution then
             Ada.Text_IO.Put_Line
-              ("ac" & Character'Val (48 + AC) & " <- "
+              (" ac" & Character'Val (48 + AC) & " <- "
                & This.ACs (AC)'Image);
          end if;
 
@@ -597,6 +606,13 @@ package body Pdp11.Machine is
       else
          Operate (This.Get_Float_Operand_Value (Operand),
                   This.ACs (AC));
+
+         if Trace_Execution then
+            Ada.Text_IO.Put_Line
+              (" ac" & Character'Val (48 + AC) & " <- "
+               & This.ACs (AC)'Image);
+         end if;
+
       end if;
    end Float_Format_1;
 
@@ -1027,8 +1043,11 @@ package body Pdp11.Machine is
                  (Address_Type (SP), This.Rs (Rec.Src.Register));
                if Trace_Execution then
                   Ada.Text_IO.Put
-                    (" (" & Hex_Image (This.Rs (Rec.Src.Register))
-                     & " -> " & Hex_Image (SP) & ")");
+                    (" "
+                     & Hex_Image (Word_16 (Destination))
+                     & ": "
+                     & "SP<" & Hex_Image (SP) & "> <- "
+                     & Hex_Image (This.Rs (Rec.Src.Register)));
                end if;
 
                PC := Word_16 (Destination);
@@ -1250,6 +1269,12 @@ package body Pdp11.Machine is
       Ada.Text_IO.Put (This.Clock_Image);
       Ada.Text_IO.New_Line;
 
+      for I in This.ACs'Range loop
+         Ada.Text_IO.Put_Line
+           ("AC" & Character'Val (Natural (I) + 48) & ": "
+            & This.ACs (I)'Image);
+      end loop;
+
       declare
          use type Ada.Calendar.Time;
          use type Pdp11.ISA.Microsecond_Duration;
@@ -1323,6 +1348,19 @@ package body Pdp11.Machine is
          This.Set_Word_16 (A, Hi);
       end;
    end Set_Float_Operand_Value;
+
+   ------------------------
+   -- Set_Float_Register --
+   ------------------------
+
+   procedure Set_Float_Register
+     (This     : in out Instance'Class;
+      Register : FP_Register;
+      Value    : Float_32)
+   is
+   begin
+      This.ACs (Register) := Value;
+   end Set_Float_Register;
 
    ------------
    -- Set_NZ --
@@ -1647,6 +1685,7 @@ package body Pdp11.Machine is
       Trace_Execution := Pdp11.Options.Trace;
       This.Start_Time := Ada.Calendar.Clock;
       This.Start_Clock := This.Clock;
+      This.Started := True;
       Limit_Speed := Pdp11.Options.Limit_Speed;
       loop
          This.Execute_Next_Instruction;

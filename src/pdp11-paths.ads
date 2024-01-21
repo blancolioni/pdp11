@@ -1,7 +1,7 @@
 package Pdp11.Paths is
 
    Config_Path : constant String :=
-     "D:\git\pdp11\config";
+     "E:\git\pdp11\share\pdp11";
 
    function Config_File
      (File_Path : String)

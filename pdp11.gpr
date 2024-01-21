@@ -1,7 +1,7 @@
 with "config/pdp11_config.gpr";
 project Pdp11 is
 
-   for Source_Dirs use ("src/", "config/", "src/devices", "src/driver", "src/machine", "src/tests");
+   for Source_Dirs use ("src/");
    for Object_Dir use "obj/" & Pdp11_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Exec_Dir use "bin";

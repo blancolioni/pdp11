@@ -414,20 +414,29 @@ package body Pdp11.ISA is
             return 8#104400# + Word_16 (Rec.Offset);
 
          when Floating_Point_F1 =>
-            return 8#171000#
-            + (Instruction_Type'Pos (Rec.Instruction)
-               - Instruction_Type'Pos (Floating_Point_F1'First))
-              * 256
-              + Word_16 (Rec.FAC) * 64
-              + Encode (Rec.F_Operand, 0);
+            declare
+               Src : constant Operand_Type :=
+                       (if Rec.Instruction = I_STF
+                        then Rec.Dst else Rec.Src);
+               Dst : constant Operand_Type :=
+                       (if Rec.Instruction = I_STF
+                        then Rec.Src else Rec.Dst);
+            begin
+               return 8#171000#
+               + (Instruction_Type'Pos (Rec.Instruction)
+                  - Instruction_Type'Pos (Floating_Point_F1'First))
+                 * 256
+                 + Word_16 (Dst.Register) * 64
+                 + Encode (Src, 0);
+            end;
          when Floating_Point_F2 =>
             return 8#170400#
             + (Instruction_Type'Pos (Rec.Instruction)
                - Instruction_Type'Pos (Floating_Point_F2'First))
               * 64
-              + Encode (Rec.F_Operand,  0);
+              + Encode (Rec.Dst,  0);
          when I_INVF =>
-            return 8#170300# + Encode (Rec.F_Operand, 0);
+            return 8#170300# + Encode (Rec.Dst, 0);
          when Vector_F1 =>
             return 8#007000#
             + Get_Opcode (Rec.Instruction, Vector_F1'First, 8)

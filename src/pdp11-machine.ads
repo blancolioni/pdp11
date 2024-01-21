@@ -58,6 +58,18 @@ package Pdp11.Machine is
       Register : Machine_Register;
       Value    : Word_16);
 
+   subtype FP_Register is Pdp11.ISA.FP_Register_Index;
+
+   function Get_Float_Register
+     (This     : Instance'Class;
+      Register : FP_Register)
+      return Float_32;
+
+   procedure Set_Float_Register
+     (This     : in out Instance'Class;
+      Register : FP_Register;
+      Value    : Float_32);
+
    overriding procedure Interrupt
      (This  : in out Instance;
       Priority : Interrupt_Priority_Type;
@@ -158,6 +170,12 @@ private
       Register : Machine_Register)
       return Word_16
    is (This.Rs (Register));
+
+   function Get_Float_Register
+     (This     : Instance'Class;
+      Register : FP_Register)
+      return Float_32
+   is (This.ACs (Register));
 
    function Clock
      (This : Instance'Class)

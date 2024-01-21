@@ -35,6 +35,11 @@ package Pdp11.ISA is
                             Deferred => False,
                             Register => 7);
 
+   function Is_Immediate_Operand
+     (Operand : Operand_Type)
+      return Boolean
+   is (Operand = Immediate_Operand);
+
    function Register_Mode
      (Index : Register_Index;
       Deferred : Boolean := False)
@@ -110,7 +115,7 @@ package Pdp11.ISA is
    function Has_Source_Operand
      (Instruction : Instruction_Type)
       return Boolean
-   is (Instruction in Double_Operand_Instruction);
+   is (Instruction in Double_Operand_Instruction | Floating_Point_F1);
 
    function Has_Source_Register
      (Instruction : Instruction_Type)
@@ -125,7 +130,9 @@ package Pdp11.ISA is
    is (Instruction in Double_Operand_Instruction
          | Sized_Single_Operand_Instruction
          | Unsized_Single_Operand_Instruction
-         | I_JSR | I_JMP);
+             | I_JSR | I_JMP
+               | Floating_Point_F1 | Floating_Point_F2
+                 | I_INVF);
 
    function Has_Branch_Operand
      (Instruction : Instruction_Type)

@@ -31,7 +31,7 @@ package body Pdp11.Addressable is
       Lo, Hi     : Word_16;
    begin
       From_Class.Get_Word_16 (Address, Lo);
-      From_Class.Get_Word_16 (Address, Hi);
+      From_Class.Get_Word_16 (Address + 2, Hi);
       Value := Conversions.As_Float_32 (Lo, Hi);
    end Get_Float_32;
 
