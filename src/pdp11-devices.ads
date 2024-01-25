@@ -39,6 +39,13 @@ package Pdp11.Devices is
      (This    : Instance'Class;
       Handler : not null access Interrupt_Handler'Class);
 
+   procedure Initialize
+     (This     : in out Instance'Class;
+      Base     : Address_Type;
+      Bound    : Address_Type;
+      Priority : Interrupt_Priority_Type := Interrupt_Priority_Type'First;
+      Vector   : Address_Type            := 0);
+
    type Device_Manager is interface;
 
    procedure Clear_Devices
