@@ -1,9 +1,10 @@
 with Ada.Exceptions;
 with Ada.Numerics.Generic_Elementary_Functions;
-with Ada.Text_IO;
+--  with Ada.Text_IO;
 
 with Pdp11.Conversions;
 with Pdp11.Images;                     use Pdp11.Images;
+with Pdp11.Logger;
 with Pdp11.Options;
 
 package body Pdp11.Machine is
@@ -305,7 +306,7 @@ package body Pdp11.Machine is
          end if;
 
          if Trace_Execution then
-            Ada.Text_IO.Put
+            Pdp11.Logger.Put
               (" "
                & (if Word then Hex_Image (Z)
                  else Hex_Image (Word_8 (Z mod 256)))
@@ -345,7 +346,7 @@ package body Pdp11.Machine is
                Z : constant Word_16 := X and Y;
             begin
                if Trace_Execution then
-                  Ada.Text_IO.Put
+                  Pdp11.Logger.Put
                     (" " & Hex_Image (X) & " and " & Hex_Image (Y)
                      & " -> " & Hex_Image (Z));
                end if;
@@ -489,7 +490,7 @@ package body Pdp11.Machine is
 
    exception
       when E : Pdp11.Addressable.Bad_Address =>
-         Ada.Text_IO.Put_Line
+         Pdp11.Logger.Put_Line
            (Ada.Exceptions.Exception_Message (E));
          Used := This.Clock - Start_Clock;
    end Execute_Quantum;
@@ -540,7 +541,7 @@ package body Pdp11.Machine is
       is
       begin
          if Trace_Execution then
-            Ada.Text_IO.Put (Src'Image & Dst'Image);
+            Pdp11.Logger.Put (Src'Image & Dst'Image);
          end if;
 
          case Instruction is
@@ -595,7 +596,7 @@ package body Pdp11.Machine is
          end if;
 
          if Trace_Execution then
-            Ada.Text_IO.Put_Line
+            Pdp11.Logger.Put_Line
               (" ac" & Character'Val (48 + AC) & " <- "
                & This.ACs (AC)'Image);
          end if;
@@ -608,7 +609,7 @@ package body Pdp11.Machine is
                   This.ACs (AC));
 
          if Trace_Execution then
-            Ada.Text_IO.Put_Line
+            Pdp11.Logger.Put_Line
               (" ac" & Character'Val (48 + AC) & " <- "
                & This.ACs (AC)'Image);
          end if;
@@ -798,7 +799,7 @@ package body Pdp11.Machine is
                         This.Get_Operand_Address (Operand, Word);
          begin
             if Trace_Execution then
-               Ada.Text_IO.Put (" (" & Hex_Image (Word_16 (Address)) & ")");
+               Pdp11.Logger.Put (" (" & Hex_Image (Word_16 (Address)) & ")");
             end if;
 
             if Address mod 2 = 1 then
@@ -952,7 +953,7 @@ package body Pdp11.Machine is
 
    begin
       if Priority > This.Priority then
-         --  Ada.Text_IO.Put_Line
+         --  Pdp11.Logger.Put_Line
          --    ("interrupt: priority" & Priority'Image
          --     & ", vector " & Pdp11.Images.Hex_Image (Word_16 (Vector)));
          Push (This.Get_PS);
@@ -986,7 +987,7 @@ package body Pdp11.Machine is
       Rec := Decode (IR);
 
       if Trace_Execution then
-         Ada.Text_IO.Put
+         Pdp11.Logger.Put
            (Clock_Image (This)
             & " "
             & Flags_Image (This)
@@ -1042,7 +1043,7 @@ package body Pdp11.Machine is
                This.Set_Word_16
                  (Address_Type (SP), This.Rs (Rec.Src.Register));
                if Trace_Execution then
-                  Ada.Text_IO.Put
+                  Pdp11.Logger.Put
                     (" "
                      & Hex_Image (Word_16 (Destination))
                      & ": "
@@ -1059,7 +1060,7 @@ package body Pdp11.Machine is
             This.Get_Word_16 (Address_Type (SP), This.Rs (Rec.Src.Register));
 
             if Trace_Execution then
-               Ada.Text_IO.Put
+               Pdp11.Logger.Put
                  (" (" & Hex_Image (SP) & " "
                   & Hex_Image (This.Rs (Rec.Src.Register))
                   & " -> " & Register_Image (Rec.Src.Register)
@@ -1089,7 +1090,7 @@ package body Pdp11.Machine is
             raise Halted with "halted at " & Hex_Image (PC);
 
          when I_WAIT =>
-            --  Ada.Text_IO.Put_Line ("waiting for interrupt ...");
+            --  Pdp11.Logger.Put_Line ("waiting for interrupt ...");
             This.Waiting := True;
 
          when I_RTI =>
@@ -1186,7 +1187,7 @@ package body Pdp11.Machine is
       end case;
 
       if Trace_Execution then
-         Ada.Text_IO.New_Line;
+         Pdp11.Logger.New_Line;
       end if;
 
       This.Clock := This.Clock + This.Current_Timing;
@@ -1257,20 +1258,20 @@ package body Pdp11.Machine is
 
    procedure Report (This : Instance'Class) is
    begin
-      Ada.Text_IO.Put_Line
+      Pdp11.Logger.Put_Line
         (" R0   R1   R2   R3   R4   R5   SP   PC  NZVC   Clock");
       for R of This.Rs loop
-         Ada.Text_IO.Put (Hex_Image (R) & " ");
+         Pdp11.Logger.Put (Hex_Image (R) & " ");
       end loop;
-      Ada.Text_IO.Put (if This.N then "N" else "-");
-      Ada.Text_IO.Put (if This.Z then "Z" else "-");
-      Ada.Text_IO.Put (if This.V then "V" else "-");
-      Ada.Text_IO.Put (if This.C then "C" else "-");
-      Ada.Text_IO.Put (This.Clock_Image);
-      Ada.Text_IO.New_Line;
+      Pdp11.Logger.Put (if This.N then "N" else "-");
+      Pdp11.Logger.Put (if This.Z then "Z" else "-");
+      Pdp11.Logger.Put (if This.V then "V" else "-");
+      Pdp11.Logger.Put (if This.C then "C" else "-");
+      Pdp11.Logger.Put (This.Clock_Image);
+      Pdp11.Logger.New_Line;
 
       for I in This.ACs'Range loop
-         Ada.Text_IO.Put_Line
+         Pdp11.Logger.Put_Line
            ("AC" & Character'Val (Natural (I) + 48) & ": "
             & This.ACs (I)'Image);
       end loop;
@@ -1285,7 +1286,7 @@ package body Pdp11.Machine is
                                (This.Clock - This.Start_Clock)
                                / 1.0e6;
       begin
-         Ada.Text_IO.Put_Line
+         Pdp11.Logger.Put_Line
            ("elapsed: machine" & Elapsed_Machine'Image
             & "; real" & Elapsed_Real'Image);
       end;
@@ -1558,7 +1559,7 @@ package body Pdp11.Machine is
       is
       begin
          if Trace_Execution then
-            Ada.Text_IO.Put
+            Pdp11.Logger.Put
               (" "
                & (if Word then Hex_Image (Z)
                  else Hex_Image (Word_8 (Z mod 256)))
@@ -1682,7 +1683,6 @@ package body Pdp11.Machine is
      (This : in out Instance'Class)
    is
    begin
-      Trace_Execution := Pdp11.Options.Trace;
       This.Start_Time := Ada.Calendar.Clock;
       This.Start_Clock := This.Clock;
       This.Started := True;
@@ -1691,6 +1691,26 @@ package body Pdp11.Machine is
          This.Execute_Next_Instruction;
       end loop;
    end Start;
+
+   -----------------
+   -- Start_Trace --
+   -----------------
+
+   procedure Start_Trace is
+   begin
+      Pdp11.Logger.Start ("trace.txt");
+      Trace_Execution := True;
+   end Start_Trace;
+
+   ----------------
+   -- Stop_Trace --
+   ----------------
+
+   procedure Stop_Trace is
+   begin
+      Pdp11.Logger.Stop;
+      Trace_Execution := False;
+   end Stop_Trace;
 
    --------------------------------
    -- Update_Float_Operand_Value --

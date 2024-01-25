@@ -77,6 +77,9 @@ package Pdp11.Machine is
 
    procedure Report (This : Instance'Class);
 
+   procedure Start_Trace;
+   procedure Stop_Trace;
+
 private
 
    type Register_Array is
